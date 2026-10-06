@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppNav } from "@/app/components/app-nav";
-import { Icon } from "@/app/components/icon";
+import { Icon } from "@/app/components/icons";
 import { Avatar } from "@/app/components/avatar";
 import { VisibilityChoice } from "@/app/components/visibility-choice";
 import { SuggestedPersonCard } from "@/app/components/suggested-person-card";

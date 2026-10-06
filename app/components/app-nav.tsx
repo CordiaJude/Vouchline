@@ -7,7 +7,7 @@ import { signOut } from "@/app/app/actions";
 import { Avatar } from "@/app/components/avatar";
 import { Logo, LogoMark } from "@/app/components/logo";
 import { AddSheet } from "@/app/components/add-sheet";
-import { Icon, type IconName } from "@/app/components/icon";
+import { Icon, type IconName } from "@/app/components/icons";
 
 // Four places and one action, organized around what people come to do:
 //   Home    -- what needs you, then what's new

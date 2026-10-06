@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/app/components/empty-state";
 import { Avatar } from "@/app/components/avatar";
-import { Icon } from "@/app/components/icon";
+import { Icon } from "@/app/components/icons";
 import { TargetRow } from "@/app/app/targets/target-row";
 import { AddTarget } from "@/app/app/targets/add-target";
 

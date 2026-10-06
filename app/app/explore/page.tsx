@@ -6,7 +6,7 @@ import { PeopleYouMayKnow } from "@/app/app/search/people-you-may-know";
 import { NetworkOrb } from "@/app/app/network/network-orb";
 import { SuggestedPersonCard, type SuggestedPerson } from "@/app/components/suggested-person-card";
 import { EmptyState } from "@/app/components/empty-state";
-import { Icon } from "@/app/components/icon";
+import { Icon } from "@/app/components/icons";
 import { buildCommunityGraph, type PublicGraphEdge } from "@/lib/community-graph";
 import { interestLabel, goalLabel } from "@/lib/interests";
 

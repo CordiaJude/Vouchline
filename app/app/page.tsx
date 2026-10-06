@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/app/components/avatar";
-import { Icon } from "@/app/components/icon";
+import { Icon } from "@/app/components/icons";
 import { SuggestedPersonCard, type SuggestedPerson } from "@/app/components/suggested-person-card";
 import { ContactRequestRow, type ContactRow } from "@/app/components/contact-request-row";
 import { interestLabel, goalLabel } from "@/lib/interests";

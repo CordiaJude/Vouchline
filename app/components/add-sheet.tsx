@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Icon, type IconName } from "@/app/components/icon";
+import { Icon, type IconName } from "@/app/components/icons";
 
 // The center "Add" action: a bottom sheet on phones, a centered dialog
 // on desktop. Every way to grow your network starts here.

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileAbout } from "@/app/components/profile-about";
 import { CategoryList, type CategoryEntry } from "@/app/components/category-list";
 import { Avatar } from "@/app/components/avatar";
-import { Icon } from "@/app/components/icon";
+import { Icon } from "@/app/components/icons";
 import type { ContactRow } from "@/app/components/contact-request-row";
 import { profileCompleteness } from "@/lib/profile-completeness";
 import { interestLabel } from "@/lib/interests";
