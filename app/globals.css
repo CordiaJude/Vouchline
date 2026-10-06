@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/* Vouchline design tokens. Dark-first, in the spirit of Instagram's
+   dark mode: true black page, near-black cards, hairline gray borders,
+   white type. There is no single "brand color" on controls -- primary
+   actions are white-on-black, links and active states use Instagram
+   blue, and the multi-stop Instagram-style gradient appears only where
+   Instagram itself uses it: story rings around avatars and the logo.
+
+   Dark is the default for everyone. A light palette is kept behind
+   data-theme="light" for a future toggle. */
+:root {
+  --page-bg: #000000;
+  --surface: #121212;
+  --fill: #1c1c1c;
+  --ink: #f5f5f5;
+  --body-text: #dbdbdb;
+  --muted: #a8a8a8;
+
+  --border: #262626;
+  /* Form-control edges: ~3:1 against surface and page (WCAG 1.4.11). */
+  --border-strong: #5e5e5e;
+
+  /* Primary actions: white pill, black label. */
+  --accent: #f5f5f5;
+  --accent-hover: #dbdbdb;
+  --accent-press: #c7c7c7;
+  --on-accent: #000000;
+  /* Quiet tinted background: active menu item, selected option. */
+  --accent-soft: rgba(255, 255, 255, 0.08);
+
+  /* Links, active tab underline, focus ring. */
+  --link: #4cb5f9;
+  --link-hover: #8fd0ff;
+
+  /* Notification badges (token name kept from the old palette). */
+  --accent-gold: #e5132f;
+  --danger: #ff6b6b;
+  --success: #4ade80;
+
+  --brand-gradient: linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+
+  --radius-pill: 999px;
+  --radius-card: 16px;
+  --radius-input: 12px;
+
+  --shadow-card: none;
+  --shadow-elevated: 0 12px 32px -8px rgba(0, 0, 0, 0.8);
+  --shadow-accent: none;
+
+  --page-fg: var(--body-text);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --page-bg: #fafafa;
+  --surface: #ffffff;
+  --fill: #efefef;
+  --ink: #000000;
+  --body-text: #262626;
+  --muted: #737373;
+  --border: #dbdbdb;
+  --border-strong: #8e8e8e;
+  --accent: #000000;
+  --accent-hover: #262626;
+  --accent-press: #363636;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(0, 0, 0, 0.05);
+  --link: #0064d1;
+  --link-hover: #00376b;
+  --accent-gold: #e5132f;
+  --danger: #d32f2f;
+  --success: #15803d;
+  --shadow-elevated: 0 12px 32px -12px rgba(0, 0, 0, 0.25);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-body: var(--body-text);
+  --color-muted: var(--muted);
+  --color-fill: var(--fill);
+  --color-surface: var(--surface);
+  --color-page: var(--page-bg);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-press: var(--accent-press);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-gold: var(--accent-gold);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+
+  /* One notch larger than Tailwind's defaults (12px/14px), with roomier
+     line height: most secondary copy in the app is text-xs/text-sm. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.6;
+
+  --radius-pill: var(--radius-pill);
+  --radius-card: var(--radius-card);
+  --radius-input: var(--radius-input);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-elevated: var(--shadow-elevated);
+  --shadow-accent: var(--shadow-accent);
+
+  --font-display: var(--font-jakarta), ui-rounded, system-ui, sans-serif;
+  --font-label: var(--font-jakarta), ui-rounded, system-ui, sans-serif;
+  --font-body: var(--font-jakarta), ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--page-fg);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible keyboard focus everywhere. In the base layer so a component
+   that draws its own focus ring (inputs: focus:ring-*) can still opt out
+   with outline-none. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
+  }
+}
+
+/* Brand gradient helpers. Real classes, not inline styles -- our CSP
+   (style-src with a nonce, no unsafe-inline) blocks style="" props. */
+.bg-brand-gradient {
+  background-image: var(--brand-gradient);
+}
+/* Instagram-style gradient ring: wrap an avatar in a span with this
+   class and p-[2px]; the inner avatar gets a surface-colored ring. */
+.ring-brand-gradient {
+  display: inline-flex;
+  flex-shrink: 0;
+  background-image: var(--brand-gradient);
+  border-radius: 9999px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Initials-avatar palette: muted, varied tones that sit well on black,
+   each dark enough for white initials (>= 4.5:1). Index order must
+   match PALETTE_SIZE in avatar-color.ts. */
+.avatar-bg-0 { background-color: #1f5f99; }
+.avatar-bg-1 { background-color: #a3324f; }
+.avatar-bg-2 { background-color: #2f6b55; }
+.avatar-bg-3 { background-color: #8a4b1c; }
+.avatar-bg-4 { background-color: #3d4a5c; }
+.avatar-bg-5 { background-color: #7a5b16; }
+.avatar-bg-6 { background-color: #1d6b72; }
+.avatar-bg-7 { background-color: #9a3b2a; }
+.avatar-bg-8 { background-color: #4b5320; }
+.avatar-bg-9 { background-color: #5b4636; }

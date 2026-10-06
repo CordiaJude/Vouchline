@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/expire-intros",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/intro-followups",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "0 14 * * 1"
+    }
+  ]
+}
