@@ -13,6 +13,7 @@ import {
   authCard,
   link,
 } from "@/app/components/ui/styles";
+import { SocialSignIn } from "@/app/components/social-sign-in";
 import { Logo } from "@/app/components/logo";
 
 const initialState: LoginState = {};
@@ -45,7 +46,10 @@ function LoginForm() {
           Enter your email and password.
         </p>
 
-        <form action={formAction} className="mt-6 flex flex-col gap-3">
+        <div className="mt-6">
+          <SocialSignIn redirectTo={redirectTo} />
+        </div>
+        <form action={formAction} className="flex flex-col gap-3">
           <label htmlFor="email" className="sr-only">
             Email
           </label>

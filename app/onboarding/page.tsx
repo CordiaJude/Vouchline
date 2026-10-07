@@ -81,7 +81,15 @@ export default async function OnboardingPage({
           defaultFullName={
             typeof user.user_metadata?.full_name === "string"
               ? user.user_metadata.full_name
-              : undefined
+              : typeof user.user_metadata?.name === "string"
+                ? user.user_metadata.name
+                : undefined
+          }
+          // Google sign-in supplies a profile photo; start with it.
+          defaultAvatarUrl={
+            typeof user.user_metadata?.avatar_url === "string" && user.user_metadata.avatar_url.startsWith("https://")
+              ? user.user_metadata.avatar_url
+              : null
           }
         />
       </div>

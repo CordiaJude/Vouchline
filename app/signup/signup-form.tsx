@@ -13,6 +13,7 @@ import {
   authCard,
   link,
 } from "@/app/components/ui/styles";
+import { SocialSignIn } from "@/app/components/social-sign-in";
 import { Logo } from "@/app/components/logo";
 
 const initialState: SignupState = {};
@@ -45,7 +46,10 @@ function SignupForm() {
           Just your name, email, and a password.
         </p>
 
-        <form action={formAction} className="mt-6 flex flex-col gap-3">
+        <div className="mt-6">
+          <SocialSignIn />
+        </div>
+        <form action={formAction} className="flex flex-col gap-3">
           <label htmlFor="full_name" className="sr-only">
             Full name
           </label>

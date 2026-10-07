@@ -51,13 +51,15 @@ export function OnboardingForm({
   userId,
   inviteToken,
   defaultFullName,
+  defaultAvatarUrl = null,
 }: {
   userId: string;
   inviteToken?: string;
   defaultFullName?: string;
+  defaultAvatarUrl?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(createProfile, initialState);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(defaultAvatarUrl);
   const [step, setStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -172,7 +174,7 @@ export function OnboardingForm({
 
       {/* ===== 1. You ===== */}
       <Step i={0} step={step} register={register}>
-        <AvatarUpload userId={userId} fullName={defaultFullName ?? ""} avatarUrl={null} onUploaded={setAvatarUrl} />
+        <AvatarUpload userId={userId} fullName={defaultFullName ?? ""} avatarUrl={defaultAvatarUrl} onUploaded={setAvatarUrl} />
         <ProfileField label="Full name" name="full_name" defaultValue={defaultFullName} required error={fieldError("full_name")} />
         <ProfileField label="City" name="city" placeholder="Dallas, TX" required error={fieldError("city")} />
       </Step>
