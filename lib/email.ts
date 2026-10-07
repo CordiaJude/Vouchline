@@ -7,26 +7,42 @@ const resend = process.env.RESEND_API_KEY
 
 const FROM = process.env.EMAIL_FROM ?? "Vouchline <onboarding@resend.dev>";
 
+export type EmailResult = { ok: true } | { ok: false; reason: "not_configured" | "rejected"; detail?: string };
+
+// Returns whether the email actually went out. Resend reports failures
+// (unverified sender domain, invalid address...) in its response rather
+// than by throwing, so check `error` -- ignoring it made failed sends
+// look successful.
 async function sendEmail(options: {
   to: string;
   subject: string;
   html: string;
   cc?: string;
-}) {
+}): Promise<EmailResult> {
   if (!resend) {
     // Local/dev fallback per the Phase 6 acceptance criteria: emails are
     // logged to console instead of requiring a Resend key to test the flow.
     console.log("[email:dev]", { from: FROM, ...options });
-    return;
+    return { ok: false, reason: "not_configured" };
   }
 
-  await resend.emails.send({
-    from: FROM,
-    to: options.to,
-    subject: options.subject,
-    html: options.html,
-    ...(options.cc ? { cc: options.cc } : {}),
-  });
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      ...(options.cc ? { cc: options.cc } : {}),
+    });
+    if (error) {
+      console.error("[email] send failed", { to: options.to, subject: options.subject, error });
+      return { ok: false, reason: "rejected", detail: error.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("[email] send threw", err);
+    return { ok: false, reason: "rejected", detail: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 function introLink(introId: string): string {
@@ -138,8 +154,12 @@ export async function sendMutualIntroEmail(params: {
   });
 }
 
-export async function sendVerificationCodeEmail(params: { toEmail: string; code: string; kind: "school" | "work" }) {
-  await sendEmail({
+export async function sendVerificationCodeEmail(params: {
+  toEmail: string;
+  code: string;
+  kind: "school" | "work";
+}): Promise<EmailResult> {
+  return sendEmail({
     to: params.toEmail,
     subject: `Your Vouchline verification code: ${params.code}`,
     html: `

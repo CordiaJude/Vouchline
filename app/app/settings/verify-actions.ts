@@ -48,7 +48,15 @@ export async function verifyEmail(kind: "school" | "work", prev: VerifyState, fo
     p_kind: kind,
   });
   if (error || !code) return { error: match(error?.message ?? "", REQUEST_ERRORS, "Couldn't send a code. Try again.") };
-  await sendVerificationCodeEmail({ toEmail: email.toLowerCase(), code: code as string, kind });
+  const sent = await sendVerificationCodeEmail({ toEmail: email.toLowerCase(), code: code as string, kind });
+  if (!sent.ok) {
+    return {
+      error:
+        sent.reason === "not_configured"
+          ? "Email isn't set up on this site yet, so we can't send codes. (Admin: add RESEND_API_KEY.)"
+          : "We couldn't send the email. Check the address and try again in a minute.",
+    };
+  }
   return { step: "code", email };
 }
 
