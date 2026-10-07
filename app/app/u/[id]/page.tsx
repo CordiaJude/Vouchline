@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { VouchList, type Vouch } from "@/app/components/vouch-list";
+import { VouchComposer } from "@/app/components/vouch-composer";
 import { openDirectChat } from "@/app/app/messages/actions";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -72,7 +74,7 @@ export default async function OtherProfilePage({
     notFound();
   }
 
-  const [{ data: blockRow }, { data: stripResult }, mutualResult] = await Promise.all([
+  const [{ data: blockRow }, { data: stripResult }, mutualResult, { data: vouchData }, { data: myVouchData }] = await Promise.all([
     supabase
       .from("blocks")
       .select("blocked_id")
@@ -83,7 +85,11 @@ export default async function OtherProfilePage({
     activeTab === "connections"
       ? supabase.rpc("mutual_connections", { p_other: profile.id })
       : Promise.resolve({ data: [] as MutualPerson[] }),
+    supabase.rpc("profile_vouches", { p_subject: profile.id }),
+    supabase.rpc("my_vouch_for", { p_subject: profile.id }).maybeSingle(),
   ]);
+  const vouches = (vouchData ?? []) as Vouch[];
+  const myVouch = myVouchData as { body: string; status: "pending" | "approved" | "hidden" } | null;
 
   const isBlocked = !!blockRow;
   const strip = stripResult as HowConnected | null;
@@ -183,7 +189,28 @@ export default async function OtherProfilePage({
 
         <div className="mt-6">
           {activeTab === "about" ? (
-            <ProfileAbout profile={profile} />
+            <>
+              <ProfileAbout profile={profile} />
+              <section className="mt-8">
+                <h2 className="text-base font-bold text-ink">
+                  Vouches{vouches.length > 0 && <span className="ml-1.5 font-semibold text-muted">{vouches.length}</span>}
+                </h2>
+                <div className="mt-3 flex flex-col gap-3">
+                  {vouches.length > 0 ? (
+                    <VouchList vouches={vouches} />
+                  ) : (
+                    <p className="text-sm text-muted">No vouches yet.</p>
+                  )}
+                  {strip?.relationship_status === "confirmed" && (
+                    <VouchComposer
+                      subjectId={profile.id}
+                      firstName={profile.full_name.split(" ")[0]}
+                      existing={myVouch}
+                    />
+                  )}
+                </div>
+              </section>
+            </>
           ) : mutualList.length === 0 ? (
             <p className={mutedText}>No mutual connections yet.</p>
           ) : (

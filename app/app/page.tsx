@@ -71,6 +71,7 @@ export default async function Home() {
     { data: brokerAsks },
     { data: targetAsks },
     { data: suggestedData },
+    { data: vouchData },
   ] = await Promise.all([
     supabase.rpc("dashboard_stats").single(),
     supabase.rpc("pending_for_me"),
@@ -92,7 +93,11 @@ export default async function Home() {
       .order("created_at", { ascending: false })
       .limit(5),
     supabase.rpc("suggest_people", { p_limit: 10 }),
+    supabase.rpc("my_received_vouches"),
   ]);
+  const pendingVouches = (
+    (vouchData ?? []) as { id: string; author_id: string; author_name: string; author_avatar_url: string | null; body: string; status: string }[]
+  ).filter((v) => v.status === "pending");
 
   const s = stats as DashboardStats | null;
   const pendingList = (pending ?? []) as PendingConn[];
@@ -115,7 +120,8 @@ export default async function Home() {
     openIntrosCount: s?.open_intros_count ?? 0,
   });
 
-  const needsYouCount = toPassOn.length + forYou.length + pendingList.length + contactRequests.length;
+  const needsYouCount =
+    toPassOn.length + forYou.length + pendingList.length + contactRequests.length + pendingVouches.length;
 
   return (
     <div className="mx-auto flex w-full max-w-[1000px] gap-12 px-4 py-4 md:py-8">
@@ -211,6 +217,20 @@ export default async function Home() {
                   </Link>
                 </li>
               )}
+              {pendingVouches.map((v) => (
+                <ActionCard
+                  key={v.id}
+                  person={{ id: v.author_id, full_name: v.author_name, avatar_url: v.author_avatar_url }}
+                  title={
+                    <>
+                      <b className="font-bold">{v.author_name}</b> wrote you a vouch
+                    </>
+                  }
+                  detail={v.body}
+                  href="/app/me?tab=vouches"
+                  cta="Review"
+                />
+              ))}
               {contactRequests.map((c) => (
                 <li key={c.request_id}>
                   <ContactRequestRow c={c} />

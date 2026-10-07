@@ -8,9 +8,10 @@ import { Icon } from "@/app/components/icons";
 import type { ContactRow } from "@/app/components/contact-request-row";
 import { profileCompleteness } from "@/lib/profile-completeness";
 import { interestLabel } from "@/lib/interests";
-import { btnSecondarySmall } from "@/app/components/ui/styles";
+import { btnSecondarySmall, btnPrimarySmall } from "@/app/components/ui/styles";
 import { openDirectChat } from "@/app/app/messages/actions";
 import { ShareProfileButton } from "@/app/components/share-profile-button";
+import { respondVouch } from "@/app/app/vouches/actions";
 
 // The You tab: an Instagram-style profile header (photo, counts, bio,
 // actions), then About / People. Settings is the gear, not a tab.
@@ -26,7 +27,8 @@ type MyConnection = {
 
 export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   const { tab } = await searchParams;
-  const activeTab = tab === "people" || tab === "connections" ? "people" : "about";
+  const activeTab =
+    tab === "people" || tab === "connections" ? "people" : tab === "vouches" ? "vouches" : "about";
 
   const supabase = await createClient();
   const {
@@ -44,16 +46,19 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
     .maybeSingle();
   if (!profile) redirect("/onboarding");
 
-  const [{ data: stats }, { data: connectionsData }, { data: contactData }] = await Promise.all([
+  const [{ data: stats }, { data: connectionsData }, { data: contactData }, { data: vouchData }] = await Promise.all([
     supabase.rpc("dashboard_stats").single(),
     supabase.rpc("my_connections"),
     supabase.rpc("my_contacts"),
+    supabase.rpc("my_received_vouches"),
   ]);
   const s = stats as { connections_count: number; orgs_count: number } | null;
   const connections = ((connectionsData ?? []) as MyConnection[])
     .filter((c) => c.status === "confirmed")
     .sort((a, b) => a.full_name.localeCompare(b.full_name));
   const contacts = ((contactData ?? []) as ContactRow[]).filter((c) => c.status === "accepted");
+  const receivedVouches = (vouchData ?? []) as ReceivedVouch[];
+  const approvedVouches = receivedVouches.filter((v) => v.status === "approved").length;
   const completeness = profileCompleteness(profile);
   const subline = [profile.employer, profile.city].filter(Boolean).join(" · ");
 
@@ -93,7 +98,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
           <dl className="flex justify-around text-center md:mt-5 md:justify-start md:gap-10 md:text-left">
             <Count href="/app/network" value={s?.connections_count ?? connections.length} label="connections" />
             <Count href="/app/explore?view=map" value={profile.reach_score ?? 0} label="reachable" />
-            <Count href="/app/me?tab=people" value={contacts.length} label="contacts" />
+            <Count href="/app/me?tab=vouches" value={approvedVouches} label={approvedVouches === 1 ? "vouch" : "vouches"} />
           </dl>
           <div className="mt-5 hidden md:block">
             <Bio name={profile.full_name} headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
@@ -134,10 +139,13 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
       <nav className="mt-8 flex justify-center gap-14 border-t border-border" aria-label="Profile sections">
         <TabLink href="/app/me" active={activeTab === "about"} icon="user" label="About" />
         <TabLink href="/app/me?tab=people" active={activeTab === "people"} icon="users" label="People" />
+        <TabLink href="/app/me?tab=vouches" active={activeTab === "vouches"} icon="check" label="Vouches" />
       </nav>
 
       <div className="mx-auto mt-6 max-w-2xl">
-        {activeTab === "about" ? (
+        {activeTab === "vouches" ? (
+          <ReceivedVouches vouches={receivedVouches} />
+        ) : activeTab === "about" ? (
           <ProfileAbout profile={profile} />
         ) : (
           <>
@@ -207,6 +215,61 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   );
 }
 
+type ReceivedVouch = {
+  id: string;
+  author_id: string;
+  author_name: string;
+  author_avatar_url: string | null;
+  body: string;
+  status: "pending" | "approved" | "hidden";
+};
+
+// Your vouches: approve new ones before they're public; hide any time.
+function ReceivedVouches({ vouches }: { vouches: ReceivedVouch[] }) {
+  if (vouches.length === 0) {
+    return (
+      <p className="text-sm text-muted">
+        No vouches yet. Your connections can vouch for you from your profile. You approve each one before it shows.
+      </p>
+    );
+  }
+  return (
+    <ul className="flex flex-col gap-3">
+      {vouches.map((v) => (
+        <li key={v.id} className="rounded-card border border-border bg-surface p-4">
+          <div className="flex items-center gap-2.5">
+            <Avatar id={v.author_id} name={v.author_name} src={v.author_avatar_url} size={32} />
+            <Link href={`/app/u/${v.author_id}`} className="min-w-0 flex-1 truncate text-sm font-semibold text-ink hover:underline">
+              {v.author_name}
+            </Link>
+            <span
+              className={`rounded-pill px-2 py-0.5 text-[11px] font-semibold ${
+                v.status === "pending" ? "bg-link/15 text-link" : v.status === "approved" ? "bg-success/15 text-success" : "bg-fill text-muted"
+              }`}
+            >
+              {v.status === "pending" ? "Needs your OK" : v.status === "approved" ? "On your profile" : "Hidden"}
+            </span>
+          </div>
+          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-ink">&ldquo;{v.body}&rdquo;</p>
+          <form action={respondVouch} className="mt-3 flex gap-2">
+            <input type="hidden" name="vouch_id" value={v.id} />
+            {v.status !== "approved" && (
+              <button type="submit" name="approve" value="true" className={btnPrimarySmall}>
+                Show on my profile
+              </button>
+            )}
+            {v.status !== "hidden" && (
+              <button type="submit" name="approve" value="false" className={btnSecondarySmall}>
+                Hide
+              </button>
+            )}
+          </form>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Count({ href, value, label }: { href: string; value: number; label: string }) {
   return (
     <Link href={href} className="flex flex-col md:flex-row md:items-baseline md:gap-1.5">
@@ -244,7 +307,7 @@ function Bio({
   );
 }
 
-function TabLink({ href, active, icon, label }: { href: string; active: boolean; icon: "user" | "users"; label: string }) {
+function TabLink({ href, active, icon, label }: { href: string; active: boolean; icon: "user" | "users" | "check"; label: string }) {
   return (
     <Link
       href={href}
