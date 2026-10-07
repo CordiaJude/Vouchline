@@ -40,6 +40,8 @@ export function PersonSearch() {
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<PersonResult[]>([]);
   const [loading, setLoading] = useState(false);
+  // A failed search used to look exactly like "no matches".
+  const [failure, setFailure] = useState<string | null>(null);
   // Remount the school picker when filters are cleared.
   const [pickerKey, setPickerKey] = useState(0);
 
@@ -59,7 +61,7 @@ export function PersonSearch() {
     let cancelled = false;
     const t = setTimeout(async () => {
       setLoading(true);
-      const { data } = await createClient().rpc("discover_people", {
+      const { data, error } = await createClient().rpc("discover_people", {
         p_query: q,
         p_category: filters.category || null,
         p_min_mutual: filters.minMutual,
@@ -70,6 +72,14 @@ export function PersonSearch() {
         p_students_only: filters.studentsOnly,
       });
       if (!cancelled) {
+        if (error) console.error("discover_people failed", error);
+        setFailure(
+          error
+            ? error.message.includes("rate_limited")
+              ? "You're searching very fast. Wait a few seconds."
+              : `Search isn't working right now (${error.code ?? "error"}: ${error.message})`
+            : null,
+        );
         setResults((data ?? []) as PersonResult[]);
         setLoading(false);
       }
@@ -200,7 +210,8 @@ export function PersonSearch() {
 
       {!searching && <p className={mutedText}>Type at least 2 characters, or use Filters to browse.</p>}
       {searching && loading && <p className={mutedText}>Searching…</p>}
-      {searching && !loading && visible.length === 0 && <p className={mutedText}>No one matches yet.</p>}
+      {searching && !loading && failure && <p className="text-sm text-danger">{failure}</p>}
+      {searching && !loading && !failure && visible.length === 0 && <p className={mutedText}>No one matches yet.</p>}
 
       {visible.length > 0 && (
         <ul className="flex flex-col gap-3">

@@ -109,7 +109,8 @@ export function AddTarget({
       if (cancelled) return;
       setLoading(true);
       const supabase = createClient();
-      const { data } = await supabase.rpc("search_members", { q: trimmedQuery });
+      const { data, error } = await supabase.rpc("search_members", { q: trimmedQuery });
+      if (error) console.error("search_members failed", error);
       if (!cancelled) {
         setResults((data ?? []) as SearchResult[]);
         setLoading(false);
