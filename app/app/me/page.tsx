@@ -10,6 +10,7 @@ import { profileCompleteness } from "@/lib/profile-completeness";
 import { interestLabel } from "@/lib/interests";
 import { btnSecondarySmall } from "@/app/components/ui/styles";
 import { openDirectChat } from "@/app/app/messages/actions";
+import { ShareProfileButton } from "@/app/components/share-profile-button";
 
 // The You tab: an Instagram-style profile header (photo, counts, bio,
 // actions), then About / People. Settings is the gear, not a tab.
@@ -36,7 +37,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests, job_title, industry, school_name, major, status",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests, job_title, industry, school_name, major, status, username",
     )
     .eq("id", user.id)
     .is("deleted_at", null)
@@ -60,7 +61,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
     <div className="mx-auto w-full max-w-[935px] px-4 py-4 md:px-8 md:py-10">
       {/* Header */}
       <div className="flex items-center justify-between md:hidden">
-        <h1 className="truncate text-xl font-bold text-ink">{profile.full_name}</h1>
+        <h1 className="truncate text-xl font-bold text-ink">@{profile.username}</h1>
         <Link href="/app/settings" aria-label="Settings" className="-mr-2 flex h-10 w-10 items-center justify-center text-ink">
           <Icon name="gear" className="h-6 w-6" />
         </Link>
@@ -80,10 +81,11 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
 
         <div className="min-w-0 flex-1">
           <div className="hidden items-center gap-3 md:flex">
-            <h1 className="truncate text-xl font-semibold text-ink">{profile.full_name}</h1>
+            <h1 className="truncate text-xl font-semibold text-ink">@{profile.username}</h1>
             <Link href="/app/settings" className={btnSecondarySmall}>
               Edit profile
             </Link>
+            <ShareProfileButton username={profile.username} name={profile.full_name} />
             <Link href="/app/settings" aria-label="Settings" className="flex h-9 w-9 items-center justify-center text-ink">
               <Icon name="gear" className="h-6 w-6" />
             </Link>
@@ -94,20 +96,18 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
             <Count href="/app/me?tab=people" value={contacts.length} label="contacts" />
           </dl>
           <div className="mt-5 hidden md:block">
-            <Bio headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
+            <Bio name={profile.full_name} headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
           </div>
         </div>
       </header>
 
       <div className="mt-4 md:hidden">
-        <Bio headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
+        <Bio name={profile.full_name} headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Link href="/app/settings" className={`${btnSecondarySmall} bg-fill`}>
             Edit profile
           </Link>
-          <Link href="/app/connect" className={`${btnSecondarySmall} bg-fill`}>
-            Share profile
-          </Link>
+          <ShareProfileButton username={profile.username} name={profile.full_name} className={`${btnSecondarySmall} bg-fill`} />
         </div>
       </div>
 
@@ -217,11 +217,13 @@ function Count({ href, value, label }: { href: string; value: number; label: str
 }
 
 function Bio({
+  name,
   headline,
   subline,
   interests,
   linkedin,
 }: {
+  name: string;
   headline: string | null;
   subline: string;
   interests: string[];
@@ -229,7 +231,8 @@ function Bio({
 }) {
   return (
     <div className="text-sm">
-      {headline && <p className="font-semibold text-ink">{headline}</p>}
+      <p className="font-bold text-ink">{name}</p>
+      {headline && <p className="text-body">{headline}</p>}
       {subline && <p className="text-muted">{subline}</p>}
       {interests.length > 0 && <p className="mt-1 text-body">{interests.slice(0, 6).map(interestLabel).join(" · ")}</p>}
       {linkedin && (

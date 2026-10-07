@@ -49,6 +49,7 @@ export default async function ConnectPage() {
                 server fetch itself failed, so the retry needs a full
                 reload rather than a soft client-side transition that
                 might not re-run it. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- full reload is the point (see above) */}
             <a href="/app/connect" className={btnSecondarySmall}>
               Try again
             </a>

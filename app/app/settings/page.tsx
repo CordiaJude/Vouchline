@@ -25,7 +25,7 @@ export default async function SettingsPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, sticker_mode, is_public, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, timezone, interests, goals, status, job_title, industry, school_id, school_name, major",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, sticker_mode, is_public, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, timezone, interests, goals, status, job_title, industry, school_id, school_name, major, username",
     )
     .eq("id", user.id)
     .maybeSingle();

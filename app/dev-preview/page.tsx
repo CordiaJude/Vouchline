@@ -34,6 +34,10 @@ import {
 // a Supabase project. Never served in production.
 export const dynamic = "force-dynamic";
 
+// Sample chat timestamps, fixed when the module loads (not during render).
+const LOADED_AT = Date.now();
+const minutesAgo = (m: number) => new Date(LOADED_AT - m * 60000).toISOString();
+
 const PEOPLE = [
   "Maya Chen", "Jordan Ellis", "Priya Raman", "Sam Okafor", "Lena Fischer",
   "Diego Alvarez", "Ava Thompson", "Noah Kim", "Zara Malik", "Ethan Brooks",
@@ -214,12 +218,12 @@ export default function DevPreview() {
                     { id: "p14", full_name: "Leo Rossi", avatar_url: null },
                   ]}
                   initialMessages={[
-                    { id: "1", sender_id: null, body: "Maya Chen introduced Jordan Bullard and Leo Rossi. Say hello!", created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString() },
-                    { id: "2", sender_id: "me", body: "Would love to talk about product roles at Fable.", created_at: new Date(Date.now() - 1000 * 60 * 89).toISOString() },
-                    { id: "3", sender_id: "p0", body: "Leo, meet Jordan. Best PM I worked with at Northwind. You two should grab coffee.", created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-                    { id: "4", sender_id: "p14", body: "Thanks Maya! Jordan, great to meet you.", created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString() },
-                    { id: "5", sender_id: "p14", body: "Free Thursday afternoon?", created_at: new Date(Date.now() - 1000 * 60 * 11).toISOString() },
-                    { id: "6", sender_id: "me", body: "Thursday works. 3pm?", created_at: new Date(Date.now() - 1000 * 60 * 2).toISOString() },
+                    { id: "1", sender_id: null, body: "Maya Chen introduced Jordan Bullard and Leo Rossi. Say hello!", created_at: minutesAgo(90) },
+                    { id: "2", sender_id: "me", body: "Would love to talk about product roles at Fable.", created_at: minutesAgo(89) },
+                    { id: "3", sender_id: "p0", body: "Leo, meet Jordan. Best PM I worked with at Northwind. You two should grab coffee.", created_at: minutesAgo(30) },
+                    { id: "4", sender_id: "p14", body: "Thanks Maya! Jordan, great to meet you.", created_at: minutesAgo(12) },
+                    { id: "5", sender_id: "p14", body: "Free Thursday afternoon?", created_at: minutesAgo(11) },
+                    { id: "6", sender_id: "me", body: "Thursday works. 3pm?", created_at: minutesAgo(2) },
                   ]}
                 />
               </div>

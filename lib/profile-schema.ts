@@ -47,6 +47,13 @@ export const profileFieldsSchema = z.object({
       )
       .optional(),
   ),
+  username: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim().toLowerCase().replace(/^@/, "") || undefined : undefined),
+    z
+      .string()
+      .regex(/^(?!\.)(?!.*\.\.)[a-z0-9_.]{3,30}(?<!\.)$/, "3–30 characters: letters, numbers, underscores and periods.")
+      .optional(),
+  ),
   status: z.preprocess(
     emptyToUndefined,
     z.enum(["student", "working", "founder", "looking", "other"]).optional(),
@@ -94,6 +101,7 @@ export function parseProfileFormData(formData: FormData) {
     city: formData.get("city"),
     linkedin_url: formData.get("linkedin_url"),
     avatar_url: formData.get("avatar_url"),
+    username: formData.get("username"),
     status: formData.get("status"),
     job_title: formData.get("job_title"),
     industry: formData.get("industry"),

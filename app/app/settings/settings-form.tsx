@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { ProfileField } from "@/app/components/profile-field";
 import { AvatarUpload } from "@/app/components/avatar-upload";
 import { CollegePicker } from "@/app/components/college-picker";
+import { UsernameField } from "./username-field";
 import { INDUSTRIES, STATUSES } from "@/lib/profile-options";
 import { btnPrimary, input } from "@/app/components/ui/styles";
 import { updateProfile, type SettingsState } from "./actions";
@@ -18,6 +19,7 @@ type ProfileDefaults = {
   city: string | null;
   linkedin_url: string | null;
   avatar_url: string | null;
+  username: string;
   status: string | null;
   job_title: string | null;
   industry: string | null;
@@ -51,6 +53,7 @@ export function SettingsForm({ profile }: { profile: ProfileDefaults }) {
         defaultValue={profile.full_name}
         error={fieldError("full_name")}
       />
+      <UsernameField current={profile.username} error={fieldError("username")} />
       <ProfileField
         label="Headline"
         name="headline"

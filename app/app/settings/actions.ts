@@ -43,6 +43,12 @@ export async function updateProfile(
     .eq("id", user.id);
 
   if (error) {
+    if (error.code === "23505" || error.message.includes("profiles_username_key")) {
+      return { fieldErrors: { username: ["That username is taken."] } };
+    }
+    if (error.message.includes("profiles_username_format")) {
+      return { fieldErrors: { username: ["That username isn't allowed."] } };
+    }
     return { formError: error.message };
   }
 

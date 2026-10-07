@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { IntroForm } from "./intro-form";
@@ -26,9 +27,9 @@ export default async function NewIntroPage({
           </h1>
           <p className="mt-3 text-sm text-muted">
             Start from{" "}
-            <a href="/app/search" className="underline">
-              Search
-            </a>{" "}
+            <Link href="/app/explore" className="underline">
+              Explore
+            </Link>{" "}
             and pick a broker to ask.
           </p>
         </div>
