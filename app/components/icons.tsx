@@ -27,7 +27,12 @@ export type IconName =
   | "expand"
   | "download"
   | "message"
-  | "arrowLeft";
+  | "arrowLeft"
+  | "more"
+  | "flag"
+  | "block"
+  | "image"
+  | "sparkle";
 
 const ICONS: Record<IconName, { d: string; fillable?: boolean }> = {
   home: { d: "M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z", fillable: true },
@@ -69,6 +74,11 @@ const ICONS: Record<IconName, { d: string; fillable?: boolean }> = {
     fillable: true,
   },
   arrowLeft: { d: "M19 12H5M12 19l-7-7 7-7" },
+  more: { d: "M5 12h.01M12 12h.01M19 12h.01" },
+  flag: { d: "M4 21V4M4 4h12l-2 4 2 4H4" },
+  block: { d: "M12 21a9 9 0 100-18 9 9 0 000 18zM5.6 5.6l12.8 12.8" },
+  image: { d: "M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zM8.5 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 15l-5-5L5 21" },
+  sparkle: { d: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" },
   download: { d: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" },
 };
 

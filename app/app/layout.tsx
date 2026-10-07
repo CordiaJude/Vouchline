@@ -12,7 +12,13 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
     redirect("/login");
   }
 
-  const [{ data: adminOrg }, { data: unreadCount }, { data: me }, { data: unreadMessages }] = await Promise.all([
+  // Suspended or deleted accounts can still sign in; send them somewhere clear.
+  const { data: accountState } = await supabase.rpc("my_account_state");
+  if (accountState === "inactive") {
+    redirect("/account-unavailable");
+  }
+
+  const [{ data: adminOrg }, { data: unreadCount }, { data: me }, { data: unreadMessages }, { data: isModerator }] = await Promise.all([
     supabase
       .from("memberships")
       .select("org_id")
@@ -24,6 +30,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
     supabase.rpc("unread_notification_count"),
     supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle(),
     supabase.rpc("unread_conversation_count"),
+    supabase.rpc("am_platform_admin"),
   ]);
 
   return (
@@ -32,6 +39,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
         adminOrgId={adminOrg?.org_id ?? null}
         unreadNotifications={unreadCount ?? 0}
         unreadMessages={unreadMessages ?? 0}
+        isModerator={isModerator === true}
         me={{ id: user.id, name: me?.full_name ?? "You", avatarUrl: me?.avatar_url ?? null }}
       />
       {/* Phones: h-14 top bar + bottom tab bar. Desktop: left rail,

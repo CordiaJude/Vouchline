@@ -20,6 +20,7 @@ import { LoadError, loadErrors } from "@/app/components/load-error";
 export default async function SettingsPage() {
   const pageErrors: string[] = [];
   const supabase = await createClient();
+  const { data: isModerator } = await supabase.rpc("am_platform_admin");
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -116,7 +117,12 @@ export default async function SettingsPage() {
 
           <SettingsSection title="Account">
             <div className="flex flex-wrap gap-2">
-              {adminOrg && (
+              {isModerator && (
+              <Link href="/app/moderation" className={btnSecondarySmall}>
+                Moderation
+              </Link>
+            )}
+            {adminOrg && (
                 <Link href={`/app/admin/${adminOrg.org_id}`} className={btnSecondarySmall}>
                   Org admin
                 </Link>

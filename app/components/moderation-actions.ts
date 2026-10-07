@@ -61,3 +61,38 @@ export async function submitReport(
 
   return { success: true };
 }
+
+export type ReportContentState = { error?: string; done?: boolean };
+
+// Report a person, a chat message, or a vouch (report_content, 0042).
+export async function reportContent(
+  target: { kind: "user" | "message" | "vouch"; reportedId?: string; messageId?: string; vouchId?: string },
+  _prev: ReportContentState,
+  formData: FormData,
+): Promise<ReportContentState> {
+  const { supabase } = await requireAuth();
+  const reason = [formData.get("reason"), String(formData.get("details") ?? "").trim()].filter(Boolean).join(": ");
+  if (reason.length < 5) return { error: "Pick a reason." };
+  const { error } = await supabase.rpc("report_content", {
+    p_kind: target.kind,
+    p_reason: reason.slice(0, 1000),
+    p_reported: target.reportedId ?? null,
+    p_message: target.messageId ?? null,
+    p_vouch: target.vouchId ?? null,
+  });
+  if (error) {
+    if (error.message.includes("rate_limited")) return { error: "You've sent a lot of reports today. Try again tomorrow." };
+    return { error: "Couldn't send the report. Try again." };
+  }
+  return { done: true };
+}
+
+// Block from inside a chat, then leave it.
+export async function blockFromChat(formData: FormData) {
+  const { supabase, user } = await requireAuth();
+  const target = String(formData.get("person_id") ?? "");
+  if (!target) return;
+  await supabase.from("blocks").insert({ blocker_id: user.id, blocked_id: target });
+  revalidatePath("/app/messages");
+  redirect("/app/messages");
+}

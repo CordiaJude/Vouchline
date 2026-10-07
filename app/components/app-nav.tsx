@@ -70,11 +70,13 @@ export function AppNav({
   adminOrgId,
   unreadNotifications = 0,
   unreadMessages = 0,
+  isModerator = false,
   me,
 }: {
   adminOrgId: string | null;
   unreadNotifications?: number;
   unreadMessages?: number;
+  isModerator?: boolean;
   me: { id: string; name: string; avatarUrl: string | null };
 }) {
   const pathname = usePathname();
@@ -252,6 +254,7 @@ export function AppNav({
               >
                 <MenuLink href="/app/settings" icon="gear" label="Settings" />
                 {adminOrgId && <MenuLink href={`/app/admin/${adminOrgId}`} icon="shield" label="Admin" />}
+                {isModerator && <MenuLink href="/app/moderation" icon="flag" label="Moderation" />}
                 <div className="my-1 h-px bg-border" />
                 <form action={signOut}>
                   <button
