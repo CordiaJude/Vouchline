@@ -11,6 +11,7 @@ import { interestLabel } from "@/lib/interests";
 import { btnSecondarySmall, btnPrimarySmall } from "@/app/components/ui/styles";
 import { openDirectChat } from "@/app/app/messages/actions";
 import { ShareProfileButton } from "@/app/components/share-profile-button";
+import { VerifiedBadge } from "@/app/components/verified-badge";
 import { respondVouch } from "@/app/app/vouches/actions";
 
 // The You tab: an Instagram-style profile header (photo, counts, bio,
@@ -39,7 +40,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests, job_title, industry, school_name, major, status, username",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests, job_title, industry, school_name, major, status, username, verified_school_domain, verified_work_domain",
     )
     .eq("id", user.id)
     .is("deleted_at", null)
@@ -101,13 +102,13 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
             <Count href="/app/me?tab=vouches" value={approvedVouches} label={approvedVouches === 1 ? "vouch" : "vouches"} />
           </dl>
           <div className="mt-5 hidden md:block">
-            <Bio name={profile.full_name} headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
+            <Bio verifiedSchool={profile.verified_school_domain} verifiedWork={profile.verified_work_domain} name={profile.full_name} headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
           </div>
         </div>
       </header>
 
       <div className="mt-4 md:hidden">
-        <Bio name={profile.full_name} headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
+        <Bio verifiedSchool={profile.verified_school_domain} verifiedWork={profile.verified_work_domain} name={profile.full_name} headline={profile.headline} subline={subline} interests={profile.interests ?? []} linkedin={profile.linkedin_url} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Link href="/app/settings" className={`${btnSecondarySmall} bg-fill`}>
             Edit profile
@@ -280,12 +281,16 @@ function Count({ href, value, label }: { href: string; value: number; label: str
 }
 
 function Bio({
+  verifiedSchool,
+  verifiedWork,
   name,
   headline,
   subline,
   interests,
   linkedin,
 }: {
+  verifiedSchool?: string | null;
+  verifiedWork?: string | null;
   name: string;
   headline: string | null;
   subline: string;
@@ -294,7 +299,10 @@ function Bio({
 }) {
   return (
     <div className="text-sm">
-      <p className="font-bold text-ink">{name}</p>
+      <p className="flex items-center gap-1.5 font-bold text-ink">
+        {name}
+        <VerifiedBadge school={verifiedSchool} work={verifiedWork} compact />
+      </p>
       {headline && <p className="text-body">{headline}</p>}
       {subline && <p className="text-muted">{subline}</p>}
       {interests.length > 0 && <p className="mt-1 text-body">{interests.slice(0, 6).map(interestLabel).join(" · ")}</p>}

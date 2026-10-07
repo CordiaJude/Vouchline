@@ -11,6 +11,8 @@ export type PublicCard = {
   city: string | null;
   school_name: string | null;
   connections_count: number;
+  verified_school_domain: string | null;
+  verified_work_domain: string | null;
 };
 
 // "/@jordan" -> "jordan"; anything without the @ isn't a profile link.

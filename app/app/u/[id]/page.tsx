@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { VouchList, type Vouch } from "@/app/components/vouch-list";
+import { VerifiedBadge } from "@/app/components/verified-badge";
 import { VouchComposer } from "@/app/components/vouch-composer";
 import { openDirectChat } from "@/app/app/messages/actions";
 import { notFound, redirect } from "next/navigation";
@@ -64,7 +65,7 @@ export default async function OtherProfilePage({
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, job_title, industry, school_name, major, status",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, job_title, industry, school_name, major, status, verified_school_domain, verified_work_domain",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -103,6 +104,9 @@ export default async function OtherProfilePage({
           <div>
             <h1 className={heading1}>{profile.full_name}</h1>
             {profile.headline && <p className={`${mutedText} mt-1`}>{profile.headline}</p>}
+            <div className="mt-1.5">
+              <VerifiedBadge school={profile.verified_school_domain} work={profile.verified_work_domain} />
+            </div>
           </div>
         </div>
 

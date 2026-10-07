@@ -9,6 +9,7 @@ import { QuietHoursSettings } from "./quiet-hours-settings";
 import { DeleteAccount } from "./delete-account";
 import { BlockedList } from "./blocked-list";
 import { InterestsSettings } from "./interests-settings";
+import { VerifyEmailCard } from "./verify-email-card";
 import { heading1, btnSecondarySmall } from "@/app/components/ui/styles";
 import { signOut } from "@/app/app/actions";
 
@@ -25,7 +26,7 @@ export default async function SettingsPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, sticker_mode, is_public, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, timezone, interests, goals, status, job_title, industry, school_id, school_name, major, username",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, sticker_mode, is_public, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, timezone, interests, goals, status, job_title, industry, school_id, school_name, major, username, verified_school_domain, verified_work_domain",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -63,6 +64,16 @@ export default async function SettingsPage() {
         <div className="mt-6">
           <SettingsForm profile={profile} />
         </div>
+
+        <SettingsSection title="Verification">
+          <p className="mb-3 text-sm text-muted">
+            Get a blue check on your profile by confirming your school or work email.
+          </p>
+          <div className="flex flex-col gap-3">
+            <VerifyEmailCard kind="work" verifiedDomain={profile.verified_work_domain} />
+            <VerifyEmailCard kind="school" verifiedDomain={profile.verified_school_domain} />
+          </div>
+        </SettingsSection>
 
         <SettingsSection title="Interests">
           <InterestsSettings interests={profile.interests ?? []} goals={profile.goals ?? []} />

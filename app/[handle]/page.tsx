@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/app/components/avatar";
 import { Logo } from "@/app/components/logo";
+import { VerifiedBadge } from "@/app/components/verified-badge";
 import { btnPrimary, btnSecondary } from "@/app/components/ui/styles";
 import { getPublicCard, usernameFromHandle } from "./card";
 
@@ -51,6 +52,9 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         </span>
         <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-ink">{card.full_name}</h1>
         <p className="text-sm text-muted">@{card.username}</p>
+        <div className="mt-2 flex justify-center">
+          <VerifiedBadge school={card.verified_school_domain} work={card.verified_work_domain} />
+        </div>
         {card.headline && <p className="mt-3 text-sm text-body">{card.headline}</p>}
         <p className="mt-1 text-xs text-muted">
           {[card.city, card.school_name].filter(Boolean).join(" · ")}
