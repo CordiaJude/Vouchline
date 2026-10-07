@@ -1,70 +1,66 @@
-export const metadata = { title: "Acceptable Use — Vouchline" };
+import { LegalPage, Section, Bullets, Contact } from "@/app/components/legal-page";
+
+export const metadata = { title: "Acceptable use · Vouchline" };
 
 // See app/page.tsx for why this is forced dynamic (CSP nonce).
 export const dynamic = "force-dynamic";
 
 export default function AcceptableUsePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
-      <div className="w-full max-w-lg">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink">
-          Acceptable use
-        </h1>
-        <p className="mt-2 font-body text-sm text-muted">
-          The short version: treat this like your chapter&apos;s network,
-          because it is.
+    <LegalPage
+      title="Acceptable use"
+      intro="Vouchline runs on trust: people vouch for each other and pass along introductions. These rules keep it that way. Breaking them can get content removed or an account suspended."
+    >
+      <Section title="Be real">
+        <Bullets
+          items={[
+            "Use your real identity. Don't pretend to be someone else or a company you don't represent.",
+            "Only confirm connections with people you actually know, and describe the relationship honestly.",
+            "Write vouches that are true and specific. No paid, traded or fake vouches.",
+            "Don't verify an email address that isn't yours.",
+          ]}
+        />
+      </Section>
+
+      <Section title="Be respectful">
+        <Bullets
+          items={[
+            "No harassment, threats, bullying or hate based on who someone is.",
+            "No sexual content, and nothing involving minors, ever.",
+            "Don't share other people's private information, or screenshots of private chats, without permission.",
+            "If someone declines an intro, ignores a request or blocks you, leave it there.",
+          ]}
+        />
+      </Section>
+
+      <Section title="No spam or scams">
+        <Bullets
+          items={[
+            "No mass or copy-paste contact requests, messages or intro asks.",
+            "No selling, recruiting or fundraising pitches to people who didn't ask for them.",
+            "No scams, phishing, malware or links meant to deceive.",
+            "Don't scrape, copy or bulk-export member data, or use bots or automation on the site.",
+          ]}
+        />
+      </Section>
+
+      <Section title="Use the tools as intended">
+        <Bullets
+          items={[
+            "Don't try to get around blocks, limits, privacy settings or suspensions.",
+            "Don't test whether email addresses have accounts, or probe the site's security.",
+            "Don't use AI features to create misleading or abusive content.",
+          ]}
+        />
+      </Section>
+
+      <Section title="Reporting">
+        <p>
+          See something that breaks these rules? Use <b>Report</b> on the message, vouch or profile (or in a chat&apos;s
+          ⋯ menu). Reports are anonymous. You can also block anyone at any time.
         </p>
-
-        <div className="mt-8 flex flex-col gap-6 font-body text-sm text-body">
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Don&apos;t
-            </h2>
-            <ul className="mt-2 list-disc space-y-1.5 pl-5">
-              <li>
-                Claim a relationship that doesn&apos;t exist, or inflate one
-                to get an introduction.
-              </li>
-              <li>Impersonate another member or create a fake account.</li>
-              <li>
-                Use intro requests to spam, solicit, or sell to people who
-                haven&apos;t asked for it.
-              </li>
-              <li>
-                Scrape, export, or share the roster or member data outside
-                the app.
-              </li>
-              <li>
-                Harass, threaten, or repeatedly contact someone who has
-                blocked you or asked you to stop.
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              If something goes wrong
-            </h2>
-            <p className="mt-2">
-              You can block anyone from Settings or their profile, and
-              report a specific incident from any intro thread. Reports go
-              to your chapter admin, who can remove a member from the
-              chapter.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Enforcement
-            </h2>
-            <p className="mt-2">
-              A chapter admin can act on a report by removing a member.
-              Repeated or serious violations can result in permanent
-              removal from the pilot.
-            </p>
-          </section>
-        </div>
-      </div>
-    </div>
+        <Contact />
+      </Section>
+    </LegalPage>
   );
 }

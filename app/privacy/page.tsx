@@ -1,101 +1,166 @@
 import Link from "next/link";
+import { LegalPage, Section, Bullets, Contact } from "@/app/components/legal-page";
 
-export const metadata = { title: "Privacy — Vouchline" };
+export const metadata = { title: "Privacy · Vouchline" };
 
 // See app/page.tsx for why this is forced dynamic (CSP nonce).
 export const dynamic = "force-dynamic";
 
 export default function PrivacyPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
-      <div className="w-full max-w-lg">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink">
-          Privacy
-        </h1>
-        <p className="mt-2 font-body text-sm text-muted">
-          Plain language, no legalese we can avoid. Last updated for the
-          pilot launch.
+    <LegalPage
+      title="Privacy"
+      intro="Vouchline helps you meet people through others who actually know you. That only works if you trust us with real relationships, so here's exactly what we collect, who can see it, and what we never do. Plain language, no tricks."
+    >
+      <Section title="What we collect">
+        <Bullets
+          items={[
+            <>
+              <b>Account:</b> your email address and, if you use Google sign-in, your name and profile photo from Google.
+            </>,
+            <>
+              <b>Profile:</b> what you add: name, photo, headline, city, whether you&apos;re a student, school, major,
+              graduation year, job title, company, industry, work and education history, skills, interests, goals,
+              LinkedIn link and username.
+            </>,
+            <>
+              <b>Connections:</b> who you&apos;re connected to, how you know them, for how long, and a private closeness
+              rating; plus contact requests and the people you want to meet.
+            </>,
+            <>
+              <b>Activity:</b> intro requests you send, pass on or receive; messages and photos you send in chats;
+              vouches you write or receive; reports you make.
+            </>,
+            <>
+              <b>Settings:</b> choices like &ldquo;Let people find me&rdquo;, quiet hours, theme, and, if you turn them
+              on, a notification token for your device.
+            </>,
+            <>
+              <b>Technical:</b> basic logs (like errors and the time of a request) so we can keep the app working and
+              secure.
+            </>,
+          ]}
+        />
+      </Section>
+
+      <Section title="Who can see what">
+        <Bullets
+          items={[
+            <>
+              <b>Your profile</b> is visible to people in your orgs and your connections. If &ldquo;Let people find
+              me&rdquo; is on, any signed-in member can find it, and your public link (vouchline.com/@you) shows a short
+              card to anyone.
+            </>,
+            <>
+              <b>Your closeness ratings are never shown</b> to anyone, including the person you rated. We only use them
+              to rank who&apos;s best placed to make an intro.
+            </>,
+            <>
+              <b>Each connection is public or private.</b> It appears on other people&apos;s network maps only if both
+              of you chose Public. Your own connections are always visible to you.
+            </>,
+            <>
+              <b>Messages and photos</b> are visible only to the people in that chat. Photos are stored privately and
+              only chat members can open them.
+            </>,
+            <>
+              <b>Vouches</b> appear on your profile only after you approve them, and you can hide them any time.
+            </>,
+            <>
+              <b>Verified badges</b> show only the domain (like &ldquo;baylor.edu&rdquo;), never your email address.
+            </>,
+          ]}
+        />
+      </Section>
+
+      <Section title="Finding friends from your contacts">
+        <p>
+          If you use Find friends, the email addresses you choose are scrambled (hashed) on your device before anything
+          is sent. We compare those hashes with members who chose &ldquo;Let people find me&rdquo;, show you the
+          matches, and then throw the rest away. We don&apos;t store your address book or create profiles for people who
+          haven&apos;t joined.
         </p>
+      </Section>
 
-        <div className="mt-8 flex flex-col gap-6 font-body text-sm text-body">
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              What we store
-            </h2>
-            <p className="mt-2">
-              Your name, grad year, pledge class, employer, city, and
-              LinkedIn URL if you add them. The relationships you confirm
-              with other members (who, what kind, how long you&apos;ve known
-              each other, and how close). The intro requests you send,
-              receive, or broker. Your email address, used only for sign-in
-              and app notifications.
-            </p>
-          </section>
+      <Section title="AI features">
+        <p>
+          Some features use AI from Anthropic (the makers of Claude): writing intro messages, turning a plain-English
+          description into search filters, and reading a resume you upload to suggest profile details. For these, we
+          send only what&apos;s needed: your own words, public profile details (names and headlines) of the people
+          involved, or the resume you chose. We never send closeness ratings, private connections, messages or contact
+          details. Resumes aren&apos;t stored by us after the suggestions are made. Anthropic processes this data to
+          return the result, under its commercial terms.
+        </p>
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Your closeness rating is private
-            </h2>
-            <p className="mt-2">
-              When you confirm a connection, you rate how close it is on a
-              1&ndash;3 scale. That number is never shown to the other
-              person, to brokers, or to anyone else. It&apos;s used
-              internally to rank who&apos;s best positioned to make an
-              introduction &mdash; nothing more.
-            </p>
-          </section>
+      <Section title="Services we rely on">
+        <p>We use a small number of providers to run Vouchline. They process data only to provide their service to us:</p>
+        <Bullets
+          items={[
+            "Supabase: database, file storage and sign-in",
+            "Vercel: hosting",
+            "Google: Google sign-in, if you use it",
+            "Resend: sending email (sign-in, verification codes, intro updates)",
+            "Anthropic: the AI features above",
+            "Your browser's push service (Apple, Google or Mozilla): delivering notifications you turned on",
+            "Sentry: error reports, if enabled",
+          ]}
+        />
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              We don&apos;t sell your data
-            </h2>
-            <p className="mt-2">
-              We don&apos;t sell, rent, or share your data with advertisers
-              or data brokers. Your information is visible only to other
-              verified members of your chapter, scoped to what the app
-              needs to work (search, broker-finding, intro requests).
-            </p>
-          </section>
+      <Section title="What we never do">
+        <Bullets
+          items={[
+            "Sell, rent or trade your data.",
+            "Share it with advertisers or data brokers.",
+            "Show you ads based on your data.",
+            "Use your messages or relationships to train AI.",
+          ]}
+        />
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Deletion
-            </h2>
-            <p className="mt-2">
-              You can delete your account and profile at any time from
-              Settings. This removes your profile and disconnects your
-              confirmed relationships. If your chapter&apos;s pilot ends and
-              isn&apos;t renewed, all chapter data is deleted &mdash; see
-              our{" "}
-              <Link href="/terms" className="text-link underline underline-offset-2 hover:text-link-hover">
-                Terms
-              </Link>{" "}
-              for details.
-            </p>
-          </section>
+      <Section title="Cookies">
+        <p>
+          We use cookies only to keep you signed in and to remember a few choices on your device (like your theme or a
+          dismissed tip). No advertising or cross-site tracking cookies.
+        </p>
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              18+ only
-            </h2>
-            <p className="mt-2">
-              Vouchline is for adults. You confirm you&apos;re 18 or older
-              when you create your account, and we don&apos;t knowingly
-              collect data from anyone younger.
-            </p>
-          </section>
+      <Section title="Your choices and rights">
+        <Bullets
+          items={[
+            "Edit or remove anything on your profile in Settings.",
+            "Turn off “Let people find me”, make any connection private, hide any vouch, or block someone.",
+            "Turn notifications off per device, or set quiet hours.",
+            <>
+              Delete your account any time in Settings. This removes your profile, connections, vouches and the
+              messages you sent; a few records may be kept briefly where needed for safety or legal reasons (for
+              example, an open report about abuse).
+            </>,
+            "Ask us for a copy of your data or to correct it.",
+          ]}
+        />
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Questions
-            </h2>
-            <p className="mt-2">
-              Reach out to your chapter admin, or contact us directly if
-              you&apos;re not sure who that is.
-            </p>
-          </section>
-        </div>
-      </div>
-    </div>
+      <Section title="Safety and moderation">
+        <p>
+          When someone reports a message, vouch or account, our moderators can see the reported content and a copy of it
+          is kept with the report so it can be reviewed. Reporters stay anonymous to the person they report. See our{" "}
+          <Link href="/acceptable-use" className="font-semibold text-link hover:underline">
+            Acceptable use
+          </Link>{" "}
+          rules.
+        </p>
+      </Section>
+
+      <Section title="18 and older">
+        <p>Vouchline is for adults. We don&apos;t knowingly collect data from anyone under 18.</p>
+      </Section>
+
+      <Section title="Changes and questions">
+        <p>If we change this policy in a meaningful way, we&apos;ll tell you in the app before it takes effect.</p>
+        <Contact />
+      </Section>
+    </LegalPage>
   );
 }

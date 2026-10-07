@@ -1,90 +1,100 @@
 import Link from "next/link";
+import { LegalPage, Section, Bullets, Contact } from "@/app/components/legal-page";
 
-export const metadata = { title: "Terms — Vouchline" };
+export const metadata = { title: "Terms · Vouchline" };
 
 // See app/page.tsx for why this is forced dynamic (CSP nonce).
 export const dynamic = "force-dynamic";
 
 export default function TermsPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
-      <div className="w-full max-w-lg">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink">
-          Terms
-        </h1>
-        <p className="mt-2 font-body text-sm text-muted">
-          Plain language, no legalese we can avoid. Last updated for the
-          pilot launch.
+    <LegalPage
+      title="Terms of service"
+      intro="These are the rules for using Vouchline. By creating an account you agree to them, along with our Privacy policy and Acceptable use rules."
+    >
+      <Section title="What Vouchline is">
+        <p>
+          Vouchline is a network of real, confirmed relationships. You connect with people you know, and when you want
+          to meet someone new, the app shows who can introduce you and lets you ask. We provide the tools; the people
+          involved decide whether to make or accept an intro.
         </p>
+      </Section>
 
-        <div className="mt-8 flex flex-col gap-6 font-body text-sm text-body">
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              What this is
-            </h2>
-            <p className="mt-2">
-              Vouchline is a pilot app for a single chapter, invite-only.
-              It helps members find warm introductions through people they
-              actually know, instead of cold outreach.
-            </p>
-          </section>
+      <Section title="Your account">
+        <Bullets
+          items={[
+            "You must be at least 18 years old.",
+            "Use your real name and accurate information. One account per person; don't share or transfer it.",
+            "Keep your sign-in secure. You're responsible for activity on your account.",
+            "If you join through an organization's invite, that organization's admins can see its member list and basic activity metrics.",
+          ]}
+        />
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Who can use it
-            </h2>
-            <p className="mt-2">
-              You must be 18 or older and have a valid invite from your
-              chapter admin. Accounts aren&apos;t transferable, and
-              impersonating someone else is grounds for removal &mdash; see
-              our{" "}
-              <Link href="/acceptable-use" className="text-link underline underline-offset-2 hover:text-link-hover">
-                Acceptable Use
-              </Link>{" "}
-              page.
-            </p>
-          </section>
+      <Section title="Your content">
+        <p>
+          You own what you post: your profile, messages, photos and vouches. You give us permission to store, display
+          and send it as needed to run Vouchline (for example, showing your profile to people allowed to see it, or
+          delivering your messages). That permission ends when you delete the content or your account, except for
+          copies kept briefly for safety or legal reasons.
+        </p>
+        <p>
+          Only post things you have the right to share. Vouches and connection details should be honest: say how you
+          really know someone.
+        </p>
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              This is a pilot
-            </h2>
-            <p className="mt-2">
-              The app is running as a time-boxed pilot for your chapter.
-              We&apos;re actively reviewing whether it&apos;s working during
-              the pilot period. If the pilot isn&apos;t renewed at the end
-              of that period, the app is shut down and all chapter data
-              &mdash; profiles, connections, intro requests &mdash; is
-              deleted. See our{" "}
-              <Link href="/privacy" className="text-link underline underline-offset-2 hover:text-link-hover">
-                Privacy
-              </Link>{" "}
-              page for what we store in the meantime.
-            </p>
-          </section>
+      <Section title="Rules">
+        <p>
+          Follow our{" "}
+          <Link href="/acceptable-use" className="font-semibold text-link hover:underline">
+            Acceptable use
+          </Link>{" "}
+          rules. We may remove content or suspend or close accounts that break them, or that put other members at risk.
+          If we suspend your account, you can contact us if you think it was a mistake.
+        </p>
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              No warranty
-            </h2>
-            <p className="mt-2">
-              This is pilot software. We do our best to keep it working and
-              your data safe, but we don&apos;t promise it&apos;ll be
-              bug-free or always available.
-            </p>
-          </section>
+      <Section title="AI features">
+        <p>
+          Some features use AI to draft messages, suggest search filters or read a resume you upload. AI can be wrong:
+          review anything it suggests before you send or save it. You&apos;re responsible for what you send.
+        </p>
+      </Section>
 
-          <section>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Changes
-            </h2>
-            <p className="mt-2">
-              If these terms change in a way that matters, we&apos;ll let
-              chapter admins know before the pilot continues.
-            </p>
-          </section>
-        </div>
-      </div>
-    </div>
+      <Section title="Introductions and other people">
+        <p>
+          Vouchline doesn&apos;t guarantee that anyone will make, accept or follow up on an introduction, and we&apos;re
+          not responsible for what members say or do, on or off the app. Use good judgment when meeting people.
+        </p>
+      </Section>
+
+      <Section title="Availability and changes">
+        <p>
+          We work hard to keep Vouchline running and your data safe, but the service is provided &ldquo;as is&rdquo;,
+          without guarantees that it will always be available or error-free. We may change or discontinue features. If
+          we make a meaningful change to these terms, we&apos;ll tell you in the app before it takes effect.
+        </p>
+      </Section>
+
+      <Section title="Limits on liability">
+        <p>
+          To the extent the law allows, Vouchline isn&apos;t liable for indirect or consequential losses, or for
+          content and conduct of other members. Nothing in these terms limits rights you have under laws that
+          can&apos;t be waived.
+        </p>
+      </Section>
+
+      <Section title="Ending your account">
+        <p>
+          You can delete your account any time in Settings. We may close accounts that break these terms. Sections that
+          by their nature should continue (like limits on liability) still apply after an account is closed.
+        </p>
+      </Section>
+
+      <Section title="Questions">
+        <Contact />
+      </Section>
+    </LegalPage>
   );
 }
