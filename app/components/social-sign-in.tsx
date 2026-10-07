@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 
 type Provider = "google" | "apple";
 
+// Apple sign-in needs a paid Apple Developer account and a secret that
+// expires every 6 months (scripts/apple-client-secret.mjs). Hidden until
+// NEXT_PUBLIC_ENABLE_APPLE_SIGNIN=true is set.
+const APPLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_APPLE_SIGNIN === "true";
+
 // One-tap sign-in. Supabase handles the OAuth round trip and lands on
 // /auth/callback, which sends brand-new accounts to onboarding.
 // Each provider must be enabled in Supabase (Authentication -> Providers).
@@ -47,6 +52,7 @@ export function SocialSignIn({ redirectTo = "/app" }: { redirectTo?: string }) {
         </svg>
         {busy === "google" ? "Opening Google…" : "Continue with Google"}
       </button>
+      {APPLE_ENABLED && (
       <button
         type="button"
         onClick={() => go("apple")}
@@ -61,6 +67,7 @@ export function SocialSignIn({ redirectTo = "/app" }: { redirectTo?: string }) {
         </svg>
         {busy === "apple" ? "Opening Apple…" : "Continue with Apple"}
       </button>
+      )}
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="my-2 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
         <span className="h-px flex-1 bg-border" />
