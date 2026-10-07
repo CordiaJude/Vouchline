@@ -20,7 +20,7 @@ export function CollegePicker({
   label: string;
   required?: boolean;
   defaultValue?: { id: string | null; name: string } | null;
-  onChange?: (name: string | null) => void;
+  onChange?: (name: string | null, id?: string | null) => void;
 }) {
   const listId = useId();
   const [query, setQuery] = useState("");
@@ -56,13 +56,13 @@ export function CollegePicker({
     setPicked({ id: c.id, name: c.name });
     setOpen(false);
     setQuery("");
-    onChange?.(c.name);
+    onChange?.(c.name, c.id);
   }
 
   function clear() {
     setPicked(null);
     setManual(false);
-    onChange?.(null);
+    onChange?.(null, null);
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
