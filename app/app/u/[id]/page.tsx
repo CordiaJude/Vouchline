@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { openDirectChat } from "@/app/app/messages/actions";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BlockButton } from "./block-button";
@@ -154,6 +155,15 @@ export default async function OtherProfilePage({
               </>
             )}
           </div>
+        )}
+
+        {strip?.relationship_status === "confirmed" && (
+          <form action={openDirectChat} className="mt-4">
+            <input type="hidden" name="person_id" value={profile.id} />
+            <button type="submit" className={btnPrimary}>
+              Message
+            </button>
+          </form>
         )}
 
         {strip?.kind !== "confirmed" && (

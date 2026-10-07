@@ -9,6 +9,7 @@ import type { ContactRow } from "@/app/components/contact-request-row";
 import { profileCompleteness } from "@/lib/profile-completeness";
 import { interestLabel } from "@/lib/interests";
 import { btnSecondarySmall } from "@/app/components/ui/styles";
+import { openDirectChat } from "@/app/app/messages/actions";
 
 // The You tab: an Instagram-style profile header (photo, counts, bio,
 // actions), then About / People. Settings is the gear, not a tab.
@@ -188,9 +189,12 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
                         </Link>
                         {c.headline && <p className="truncate text-xs text-muted">{c.headline}</p>}
                       </div>
-                      <Link href={`/app/connect/request?person=${c.other_id}`} className={btnSecondarySmall}>
-                        Confirm
-                      </Link>
+                      <form action={openDirectChat}>
+                        <input type="hidden" name="person_id" value={c.other_id} />
+                        <button type="submit" className={btnSecondarySmall}>
+                          Message
+                        </button>
+                      </form>
                     </li>
                   ))}
                 </ul>

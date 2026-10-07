@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
     redirect("/login");
   }
 
-  const [{ data: adminOrg }, { data: unreadCount }, { data: me }] = await Promise.all([
+  const [{ data: adminOrg }, { data: unreadCount }, { data: me }, { data: unreadMessages }] = await Promise.all([
     supabase
       .from("memberships")
       .select("org_id")
@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
       .maybeSingle(),
     supabase.rpc("unread_notification_count"),
     supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle(),
+    supabase.rpc("unread_conversation_count"),
   ]);
 
   return (
@@ -30,6 +31,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
       <AppNav
         adminOrgId={adminOrg?.org_id ?? null}
         unreadNotifications={unreadCount ?? 0}
+        unreadMessages={unreadMessages ?? 0}
         me={{ id: user.id, name: me?.full_name ?? "You", avatarUrl: me?.avatar_url ?? null }}
       />
       {/* Phones: h-14 top bar + bottom tab bar. Desktop: left rail,

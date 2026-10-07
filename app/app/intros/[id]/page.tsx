@@ -1,11 +1,12 @@
 import { notFound, redirect } from "next/navigation";
+import { openIntroChat } from "@/app/app/messages/actions";
 import { createClient } from "@/lib/supabase/server";
 import { RespondBrokerForm } from "./respond-broker-form";
 import { RespondTargetButtons } from "./respond-target-buttons";
 import { WithdrawButton } from "./withdraw-button";
 import { ReportOutcomeButtons } from "./report-outcome-buttons";
 import { ReportForm } from "@/app/components/report-form";
-import { heading1 } from "@/app/components/ui/styles";
+import { heading1, btnPrimary } from "@/app/components/ui/styles";
 
 function statusLabel(status: string, masked: boolean): string {
   if (
@@ -101,6 +102,14 @@ export default async function IntroDetailPage({
             ["pending_broker", "pending_target"].includes(intro.status) && (
               <WithdrawButton introId={intro.id} />
             )}
+          {intro.status === "accepted" && (
+            <form action={openIntroChat}>
+              <input type="hidden" name="intro_id" value={intro.id} />
+              <button type="submit" className={btnPrimary}>
+                Open group chat
+              </button>
+            </form>
+          )}
           {intro.status === "accepted" &&
             (isRequester || isTarget) &&
             (intro.outcome_reported_at ? (

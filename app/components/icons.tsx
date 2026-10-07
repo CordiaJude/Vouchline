@@ -25,7 +25,9 @@ export type IconName =
   | "check"
   | "close"
   | "expand"
-  | "download";
+  | "download"
+  | "message"
+  | "arrowLeft";
 
 const ICONS: Record<IconName, { d: string; fillable?: boolean }> = {
   home: { d: "M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z", fillable: true },
@@ -62,6 +64,11 @@ const ICONS: Record<IconName, { d: string; fillable?: boolean }> = {
   check: { d: "M20 6L9 17l-5-5" },
   close: { d: "M18 6L6 18M6 6l12 12" },
   expand: { d: "M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" },
+  message: {
+    d: "M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z",
+    fillable: true,
+  },
+  arrowLeft: { d: "M19 12H5M12 19l-7-7 7-7" },
   download: { d: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" },
 };
 

@@ -6,6 +6,7 @@ import { Avatar } from "@/app/components/avatar";
 import { VisibilityChoice } from "@/app/components/visibility-choice";
 import { SuggestedPersonCard } from "@/app/components/suggested-person-card";
 import { OnboardingForm } from "@/app/onboarding/onboarding-form";
+import { ChatThread } from "@/app/app/messages/[id]/chat-thread";
 import { REL_TYPES } from "@/app/components/rel-types";
 import { NetworkOrb, type OrbLinkInput, type OrbNodeInput } from "@/app/app/network/network-orb";
 import {
@@ -198,6 +199,29 @@ export default function DevPreview() {
                 <input className={input} placeholder="How do you know them?" />
                 <VisibilityChoice name="Maya" />
                 <span className={`${btnPrimary} w-full`}>Confirm connection</span>
+              </div>
+            </section>
+
+            <section className="overflow-hidden rounded-card border border-border">
+              <div className="flex h-[560px] flex-col">
+                <ChatThread
+                  conversationId="preview"
+                  kind="intro"
+                  introId="preview"
+                  me={{ id: "me", full_name: "Jordan Bullard", avatar_url: null }}
+                  others={[
+                    { id: "p0", full_name: "Maya Chen", avatar_url: null },
+                    { id: "p14", full_name: "Leo Rossi", avatar_url: null },
+                  ]}
+                  initialMessages={[
+                    { id: "1", sender_id: null, body: "Maya Chen introduced Jordan Bullard and Leo Rossi. Say hello!", created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString() },
+                    { id: "2", sender_id: "me", body: "Would love to talk about product roles at Fable.", created_at: new Date(Date.now() - 1000 * 60 * 89).toISOString() },
+                    { id: "3", sender_id: "p0", body: "Leo, meet Jordan. Best PM I worked with at Northwind. You two should grab coffee.", created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+                    { id: "4", sender_id: "p14", body: "Thanks Maya! Jordan, great to meet you.", created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString() },
+                    { id: "5", sender_id: "p14", body: "Free Thursday afternoon?", created_at: new Date(Date.now() - 1000 * 60 * 11).toISOString() },
+                    { id: "6", sender_id: "me", body: "Thursday works. 3pm?", created_at: new Date(Date.now() - 1000 * 60 * 2).toISOString() },
+                  ]}
+                />
               </div>
             </section>
 

@@ -16,7 +16,7 @@ export async function proxy(request: NextRequest) {
     style-src 'self' 'nonce-${nonce}';
     img-src 'self' data: blob: https:;
     font-src 'self' data:;
-    connect-src 'self' https://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io;
     frame-ancestors 'none';
     base-uri 'self';
     form-action 'self';

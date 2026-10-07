@@ -53,6 +53,12 @@ const MAP: Tab = {
   icon: "map",
   match: () => false,
 };
+const MESSAGES: Tab = {
+  href: "/app/messages",
+  label: "Messages",
+  icon: "message",
+  match: (p) => p.startsWith("/app/messages"),
+};
 const ALERTS: Tab = {
   href: "/app/notifications",
   label: "Notifications",
@@ -63,10 +69,12 @@ const ALERTS: Tab = {
 export function AppNav({
   adminOrgId,
   unreadNotifications = 0,
+  unreadMessages = 0,
   me,
 }: {
   adminOrgId: string | null;
   unreadNotifications?: number;
+  unreadMessages?: number;
   me: { id: string; name: string; avatarUrl: string | null };
 }) {
   const pathname = usePathname();
@@ -82,6 +90,7 @@ export function AppNav({
   }
 
   const badge = unreadNotifications > 9 ? "9+" : String(unreadNotifications);
+  const msgBadge = unreadMessages > 9 ? "9+" : String(unreadMessages);
   const youActive = YOU.match(pathname);
   // The map lives at /app/explore?view=map; read the query client-side.
   const searchParams = useSearchParams();
@@ -107,6 +116,14 @@ export function AppNav({
         >
           <Icon name="heart" className="h-[26px] w-[26px]" filled={ALERTS.match(pathname)} />
           {unreadNotifications > 0 && <Badge text={badge} className="right-0.5 top-0.5" />}
+        </Link>
+        <Link
+          href={MESSAGES.href}
+          aria-label={`Messages${unreadMessages ? `, ${msgBadge} unread` : ""}`}
+          className="relative flex h-10 w-10 items-center justify-center text-ink"
+        >
+          <Icon name="message" className="h-[25px] w-[25px]" filled={MESSAGES.match(pathname)} />
+          {unreadMessages > 0 && <Badge text={msgBadge} className="right-0.5 top-0.5" />}
         </Link>
         </div>
       </header>
@@ -171,6 +188,13 @@ export function AppNav({
               tab={ALERTS}
               active={ALERTS.match(pathname)}
               badge={unreadNotifications > 0 ? badge : undefined}
+            />
+          </li>
+          <li>
+            <RailLink
+              tab={MESSAGES}
+              active={MESSAGES.match(pathname)}
+              badge={unreadMessages > 0 ? msgBadge : undefined}
             />
           </li>
           <li>
