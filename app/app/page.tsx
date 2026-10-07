@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/app/components/avatar";
 import { Icon } from "@/app/components/icons";
+import { InstallPrompt } from "@/app/components/install-prompt";
 import { SuggestedPersonCard, type SuggestedPerson } from "@/app/components/suggested-person-card";
 import { ContactRequestRow, type ContactRow } from "@/app/components/contact-request-row";
 import { interestLabel, goalLabel } from "@/lib/interests";
@@ -146,6 +147,8 @@ export default async function Home() {
             </ul>
           </section>
         )}
+
+        <InstallPrompt />
 
         {/* Needs you */}
         <section className="mt-6">

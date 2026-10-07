@@ -99,7 +99,7 @@ export function AppNav({
   return (
     <>
       {/* ================= Phones: top bar ================= */}
-      <header className="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-page/90 px-4 backdrop-blur-xl md:hidden">
+      <header className="fixed inset-x-0 top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center justify-between border-b border-border bg-page/90 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:hidden">
         <Logo href="/app" size={28} />
         <div className="-mr-2 flex items-center">
         <Link

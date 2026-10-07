@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -13,7 +13,19 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "Vouchline",
-  description: "Relationship-verified warm intros.",
+  description: "Warm intros through people who actually know you.",
+  applicationName: "Vouchline",
+  // Installed on iPhone: full screen, black status bar, "Vouchline" label.
+  appleWebApp: { capable: true, title: "Vouchline", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

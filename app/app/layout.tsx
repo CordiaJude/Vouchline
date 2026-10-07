@@ -36,7 +36,9 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
       />
       {/* Phones: h-14 top bar + bottom tab bar. Desktop: left rail,
           72px (md/lg) or 244px (xl). */}
-      <div className="pb-20 pt-14 md:pb-0 md:pl-[72px] md:pt-0 xl:pl-[244px]">{children}</div>
+      <div className="pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(3.5rem+env(safe-area-inset-top))] md:pb-0 md:pl-[72px] md:pt-0 xl:pl-[244px]">
+        {children}
+      </div>
     </div>
   );
 }

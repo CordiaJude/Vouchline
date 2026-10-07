@@ -37,7 +37,10 @@ export async function updateSession(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAppRoute = request.nextUrl.pathname.startsWith("/app");
+  // "/app" and everything under it -- not other paths that merely start
+  // with the same letters (e.g. /apple-icon, the iPhone home-screen icon).
+  const path = request.nextUrl.pathname;
+  const isAppRoute = path === "/app" || path.startsWith("/app/");
 
   if (isAppRoute && !user) {
     const url = request.nextUrl.clone();
