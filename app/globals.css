@@ -7,8 +7,8 @@
    blue, and the multi-stop Instagram-style gradient appears only where
    Instagram itself uses it: story rings around avatars and the logo.
 
-   Dark is the default for everyone. A light palette is kept behind
-   data-theme="light" for a future toggle. */
+   Dark is the default. Settings -> Appearance sets data-theme on <html>
+   to "dark", "light" or "system" (follow the device). */
 :root {
   --page-bg: #000000;
   --surface: #121212;
@@ -32,6 +32,11 @@
   /* Links, active tab underline, focus ring. */
   --link: #4cb5f9;
   --link-hover: #8fd0ff;
+  /* Default (no photo) avatar disc. */
+  --avatar-bg: #2a2a2a;
+  --avatar-fg: #e0e0e0;
+  /* Your own chat bubbles (white text on it: 5:1 in both themes). */
+  --bubble: #1d6ae0;
 
   /* Notification badges (token name kept from the old palette). */
   --accent-gold: #e5132f;
@@ -72,7 +77,38 @@
   --danger: #d32f2f;
   --success: #15803d;
   --shadow-elevated: 0 12px 32px -12px rgba(0, 0, 0, 0.25);
+  --avatar-bg: #dbdbdb;
+  --avatar-fg: #262626;
   color-scheme: light;
+}
+
+/* "Match my device": light tokens when the device is in light mode
+   (dark is the default otherwise). Same values as data-theme="light". */
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+    --page-bg: #fafafa;
+    --surface: #ffffff;
+    --fill: #efefef;
+    --ink: #000000;
+    --body-text: #262626;
+    --muted: #737373;
+    --border: #dbdbdb;
+    --border-strong: #8e8e8e;
+    --accent: #000000;
+    --accent-hover: #262626;
+    --accent-press: #363636;
+    --on-accent: #ffffff;
+    --accent-soft: rgba(0, 0, 0, 0.05);
+    --link: #0064d1;
+    --link-hover: #00376b;
+    --accent-gold: #e5132f;
+    --danger: #d32f2f;
+    --success: #15803d;
+    --shadow-elevated: 0 12px 32px -12px rgba(0, 0, 0, 0.25);
+    --avatar-bg: #dbdbdb;
+    --avatar-fg: #262626;
+    color-scheme: light;
+  }
 }
 
 @theme inline {
@@ -94,6 +130,7 @@
   --color-success: var(--success);
   --color-link: var(--link);
   --color-link-hover: var(--link-hover);
+  --color-bubble: var(--bubble);
 
   /* One notch larger than Tailwind's defaults (12px/14px), with roomier
      line height: most secondary copy in the app is text-xs/text-sm. */
@@ -161,8 +198,8 @@ body {
    stay so avatar-color.ts keeps working; they all render the same. */
 .avatar-bg-0, .avatar-bg-1, .avatar-bg-2, .avatar-bg-3, .avatar-bg-4,
 .avatar-bg-5, .avatar-bg-6, .avatar-bg-7, .avatar-bg-8, .avatar-bg-9 {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
+  background-color: var(--avatar-bg);
+  color: var(--avatar-fg);
 }
 
 /* Network orb canvas: deep space, a faint center glow, and a fine dot

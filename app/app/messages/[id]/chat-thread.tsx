@@ -209,7 +209,7 @@ export function ChatThread({
                     )}
                     <p
                       className={`whitespace-pre-wrap break-words rounded-[20px] px-3.5 py-2 text-[15px] leading-snug ${
-                        mine ? "bg-link text-white" : "bg-fill text-ink"
+                        mine ? "bg-bubble text-white" : "bg-fill text-ink"
                       } ${m.id.startsWith("temp-") ? "opacity-60" : ""}`}
                     >
                       {m.body}

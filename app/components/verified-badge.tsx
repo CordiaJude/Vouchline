@@ -17,14 +17,14 @@ export function VerifiedBadge({
     .join(" · ");
   if (compact) {
     return (
-      <span title={title} aria-label={title} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-link text-black">
+      <span title={title} aria-label={title} className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-link text-page">
         <Icon name="check" className="h-3 w-3" />
       </span>
     );
   }
   return (
     <span title={title} className="inline-flex items-center gap-1 text-xs font-semibold text-link">
-      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-link text-black">
+      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-link text-page">
         <Icon name="check" className="h-3 w-3" />
       </span>
       Verified · {domains.join(" · ")}

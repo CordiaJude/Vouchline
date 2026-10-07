@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { HIDE_COMPLETENESS_COOKIE } from "@/lib/ui-cookies";
+import { HIDE_COMPLETENESS_COOKIE, THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signOut() {
@@ -23,4 +23,16 @@ export async function dismissCompleteness() {
     secure: process.env.NODE_ENV === "production",
   });
   revalidatePath("/app", "layout");
+}
+
+// Settings -> Appearance. Stored per device, like a phone's own setting.
+export async function setTheme(formData: FormData) {
+  const theme = parseTheme(String(formData.get("theme") ?? ""));
+  (await cookies()).set(THEME_COOKIE, theme, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+  revalidatePath("/", "layout");
 }

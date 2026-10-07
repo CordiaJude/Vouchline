@@ -10,6 +10,9 @@ import { DeleteAccount } from "./delete-account";
 import { BlockedList } from "./blocked-list";
 import { InterestsSettings } from "./interests-settings";
 import { VerifyEmailCard } from "./verify-email-card";
+import { AppearanceSettings } from "./appearance-settings";
+import { cookies } from "next/headers";
+import { THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
 import { heading1, btnSecondarySmall } from "@/app/components/ui/styles";
 import { signOut } from "@/app/app/actions";
 
@@ -64,6 +67,10 @@ export default async function SettingsPage() {
         <div className="mt-6">
           <SettingsForm profile={profile} />
         </div>
+
+        <SettingsSection title="Appearance">
+          <AppearanceSettings current={parseTheme((await cookies()).get(THEME_COOKIE)?.value)} />
+        </SettingsSection>
 
         <SettingsSection title="Verification">
           <p className="mb-3 text-sm text-muted">

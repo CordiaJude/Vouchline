@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import { THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -20,18 +22,30 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = {
-  themeColor: "#000000",
-  colorScheme: "dark",
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  return {
+    themeColor:
+      theme === "system"
+        ? [
+            { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+            { media: "(prefers-color-scheme: dark)", color: "#000000" },
+          ]
+        : theme === "light"
+          ? "#fafafa"
+          : "#000000",
+    colorScheme: theme === "system" ? "light dark" : theme,
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-theme={parseTheme((await cookies()).get(THEME_COOKIE)?.value)}
       className={`${jakarta.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body">{children}</body>
