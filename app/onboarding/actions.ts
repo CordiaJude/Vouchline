@@ -39,6 +39,8 @@ export async function createProfile(
     id: user.id,
     is_18_plus,
     ...profileFields,
+    // "Let people find me" -- pre-checked on step 3; see 0032.
+    is_public: formData.get("is_public") === "on",
     interests: cleanInterests(formData.getAll("interests")),
     goals: cleanGoals(formData.getAll("goals")),
   });

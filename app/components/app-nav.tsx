@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { signOut } from "@/app/app/actions";
 import { Avatar } from "@/app/components/avatar";
 import { Logo, LogoMark } from "@/app/components/logo";
@@ -47,6 +47,12 @@ const YOU: Tab = {
       (x) => p.startsWith(x),
     ),
 };
+const MAP: Tab = {
+  href: "/app/explore?view=map",
+  label: "Map",
+  icon: "map",
+  match: () => false,
+};
 const ALERTS: Tab = {
   href: "/app/notifications",
   label: "Notifications",
@@ -77,20 +83,32 @@ export function AppNav({
 
   const badge = unreadNotifications > 9 ? "9+" : String(unreadNotifications);
   const youActive = YOU.match(pathname);
+  // The map lives at /app/explore?view=map; read the query client-side.
+  const searchParams = useSearchParams();
+  const onMap = pathname.startsWith("/app/explore") && searchParams.get("view") === "map";
 
   return (
     <>
       {/* ================= Phones: top bar ================= */}
       <header className="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-page/90 px-4 backdrop-blur-xl md:hidden">
         <Logo href="/app" size={28} />
+        <div className="-mr-2 flex items-center">
+        <Link
+          href={MAP.href}
+          aria-label="Network map"
+          className="flex h-10 w-10 items-center justify-center text-ink"
+        >
+          <Icon name="map" className="h-[26px] w-[26px]" />
+        </Link>
         <Link
           href={ALERTS.href}
           aria-label={`Notifications${unreadNotifications ? `, ${badge} unread` : ""}`}
-          className="relative -mr-2 flex h-10 w-10 items-center justify-center text-ink"
+          className="relative flex h-10 w-10 items-center justify-center text-ink"
         >
           <Icon name="heart" className="h-[26px] w-[26px]" filled={ALERTS.match(pathname)} />
           {unreadNotifications > 0 && <Badge text={badge} className="right-0.5 top-0.5" />}
         </Link>
+        </div>
       </header>
 
       {/* ================= Phones: bottom tab bar (icons only) ================= */}
@@ -143,7 +161,10 @@ export function AppNav({
             <RailLink tab={HOME} active={HOME.match(pathname)} />
           </li>
           <li>
-            <RailLink tab={EXPLORE} active={EXPLORE.match(pathname)} />
+            <RailLink tab={EXPLORE} active={EXPLORE.match(pathname) && !onMap} />
+          </li>
+          <li>
+            <RailLink tab={MAP} active={onMap} />
           </li>
           <li>
             <RailLink

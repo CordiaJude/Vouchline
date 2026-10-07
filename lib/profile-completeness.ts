@@ -11,8 +11,8 @@ const COMPLETENESS_FIELDS: { key: keyof ProfileCompletenessFields; label: string
   { key: "headline", label: "headline" },
   { key: "employer", label: "employer" },
   { key: "city", label: "city" },
-  { key: "grad_year", label: "graduation year" },
-  { key: "pledge_class", label: "pledge class" },
+  // grad_year only applies to students and pledge_class isn't asked
+  // anymore, so neither counts toward "complete".
   { key: "linkedin_url", label: "LinkedIn" },
 ];
 

@@ -50,17 +50,11 @@ export function SettingsForm({ profile }: { profile: ProfileDefaults }) {
         error={fieldError("headline")}
       />
       <ProfileField
-        label="Graduation year"
+        label="Graduation year (if you're in college)"
         name="grad_year"
         type="number"
         defaultValue={profile.grad_year ? String(profile.grad_year) : ""}
         error={fieldError("grad_year")}
-      />
-      <ProfileField
-        label="Pledge class"
-        name="pledge_class"
-        defaultValue={profile.pledge_class ?? ""}
-        error={fieldError("pledge_class")}
       />
       <ProfileField
         label="Employer"

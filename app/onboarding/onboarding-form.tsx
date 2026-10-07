@@ -12,6 +12,7 @@ const initialState: OnboardingState = {};
 
 const STEPS = [
   { title: "About you", subtitle: "Just enough for people to recognize you." },
+  { title: "School", subtitle: "Helps us connect you with classmates." },
   { title: "What are you into?", subtitle: "We'll use this to suggest people you'll click with. Pick a few." },
   { title: "Finishing touches", subtitle: "All optional except the last box." },
 ] as const;
@@ -19,6 +20,7 @@ const STEPS = [
 // Fields that live on step 1 -- if the server rejects one of these, jump
 // back there so the error is visible.
 const STEP1_FIELDS = ["full_name", "headline", "employer", "city"];
+const STEP2_FIELDS = ["grad_year"];
 
 export function OnboardingForm({
   userId,
@@ -33,15 +35,19 @@ export function OnboardingForm({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState(0);
+  const [inCollege, setInCollege] = useState<"yes" | "no" | null>(null);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Server-side validation failed on a step-1 field: show step 1 --
+  // Server-side validation failed on an earlier step's field: show it --
   // adjusted during render rather than in an effect.
   const [lastState, setLastState] = useState(state);
   if (state !== lastState) {
     setLastState(state);
-    if (state.fieldErrors && Object.keys(state.fieldErrors).some((k) => STEP1_FIELDS.includes(k))) {
+    const bad = Object.keys(state.fieldErrors ?? {});
+    if (bad.some((k) => STEP1_FIELDS.includes(k))) {
       setStep(0);
+    } else if (bad.some((k) => STEP2_FIELDS.includes(k))) {
+      setStep(1);
     }
   }
 
@@ -123,12 +129,52 @@ export function OnboardingForm({
         <ProfileField label="City" name="city" error={fieldError("city")} />
       </div>
 
-      {/* Step 2: interests + goals */}
+      {/* Step 2: school -- graduation year only for current students */}
       <div
         ref={(el) => {
           stepRefs.current[1] = el;
         }}
-        className={step === 1 ? "mt-6 flex flex-col gap-6" : "hidden"}
+        className={step === 1 ? "mt-6 flex flex-col gap-4" : "hidden"}
+      >
+        <fieldset>
+          <legend className="text-sm font-bold text-ink">Are you in college?</legend>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {(["yes", "no"] as const).map((v) => (
+              <label
+                key={v}
+                className="flex h-12 cursor-pointer items-center justify-center rounded-input border border-border-strong bg-surface text-sm font-semibold text-body transition-colors has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-page has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
+              >
+                <input
+                  type="radio"
+                  name="in_college"
+                  value={v}
+                  required
+                  checked={inCollege === v}
+                  onChange={() => setInCollege(v)}
+                  className="sr-only"
+                />
+                {v === "yes" ? "Yes" : "No"}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {inCollege === "yes" && (
+          <ProfileField
+            label="When do you graduate?"
+            name="grad_year"
+            type="number"
+            placeholder={String(new Date().getFullYear() + 2)}
+            error={fieldError("grad_year")}
+          />
+        )}
+      </div>
+
+      {/* Step 3: interests + goals */}
+      <div
+        ref={(el) => {
+          stepRefs.current[2] = el;
+        }}
+        className={step === 2 ? "mt-6 flex flex-col gap-6" : "hidden"}
       >
         {INTEREST_GROUPS.map((group) => (
           <fieldset key={group.title}>
@@ -151,26 +197,13 @@ export function OnboardingForm({
         <p className="text-xs text-muted">{picked === 0 ? "Nothing picked yet." : `${picked} picked.`}</p>
       </div>
 
-      {/* Step 3: optional details + age */}
+      {/* Step 4: optional details + age */}
       <div
         ref={(el) => {
-          stepRefs.current[2] = el;
+          stepRefs.current[3] = el;
         }}
-        className={step === 2 ? "mt-6 flex flex-col gap-4" : "hidden"}
+        className={step === 3 ? "mt-6 flex flex-col gap-4" : "hidden"}
       >
-        <ProfileField
-          label="Graduation year"
-          name="grad_year"
-          type="number"
-          placeholder="2018"
-          error={fieldError("grad_year")}
-        />
-        <ProfileField
-          label="Pledge class / cohort"
-          name="pledge_class"
-          placeholder="Fall 2018"
-          error={fieldError("pledge_class")}
-        />
         <ProfileField
           label="LinkedIn URL"
           name="linkedin_url"
@@ -178,6 +211,16 @@ export function OnboardingForm({
           placeholder="https://www.linkedin.com/in/you"
           error={fieldError("linkedin_url")}
         />
+        <label className="flex items-start gap-3 rounded-input border border-border bg-fill p-3.5 text-sm text-body">
+          <input type="checkbox" name="is_public" defaultChecked className="mt-1 h-4 w-4 accent-[var(--link)]" />
+          <span>
+            <span className="block font-semibold text-ink">Let people find me</span>
+            <span className="block text-xs text-muted">
+              Anyone on Vouchline can find your profile by name and send you a request. Your connections stay
+              private unless you mark them public. You can change this in Settings.
+            </span>
+          </span>
+        </label>
         <label className="flex items-start gap-3 text-sm text-body">
           <input type="checkbox" name="is_18_plus" required className="mt-1 h-4 w-4 accent-[var(--link)]" />
           <span>I confirm that I am 18 years of age or older.</span>
@@ -193,7 +236,7 @@ export function OnboardingForm({
         )}
         {step < STEPS.length - 1 ? (
           <button type="button" onClick={next} className={`${btnPrimary} flex-1`}>
-            {step === 1 && picked === 0 ? "Skip for now" : "Continue"}
+            {step === 2 && picked === 0 ? "Skip for now" : "Continue"}
           </button>
         ) : (
           <button type="submit" disabled={pending} className={`${btnPrimary} flex-1`}>

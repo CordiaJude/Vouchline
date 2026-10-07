@@ -89,7 +89,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
           </div>
           <dl className="flex justify-around text-center md:mt-5 md:justify-start md:gap-10 md:text-left">
             <Count href="/app/network" value={s?.connections_count ?? connections.length} label="connections" />
-            <Count href="/app/network?view=orb&scope=everyone" value={profile.reach_score ?? 0} label="reachable" />
+            <Count href="/app/explore?view=map" value={profile.reach_score ?? 0} label="reachable" />
             <Count href="/app/me?tab=people" value={contacts.length} label="contacts" />
           </dl>
           <div className="mt-5 hidden md:block">

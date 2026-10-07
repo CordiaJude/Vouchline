@@ -1,0 +1,11 @@
+-- ===== New profiles are discoverable by default =====
+-- With orgs optional (0016) and is_public defaulting to false (0014),
+-- a brand-new member could only ever find people they were already
+-- connected to -- search, Discover, "Someone I want to meet" and
+-- suggestions all came back empty. Onboarding now asks explicitly
+-- ("Let people find me", pre-checked) and sends the answer; this default
+-- only covers inserts that don't.
+--
+-- Existing rows are deliberately NOT changed: those members chose (or
+-- defaulted into) private before this question existed.
+alter table public.profiles alter column is_public set default true;

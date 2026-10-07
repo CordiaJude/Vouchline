@@ -220,6 +220,21 @@ export default async function Home() {
           )}
         </section>
 
+        {/* Your network map */}
+        <Link
+          href="/app/explore?view=map"
+          className="bg-orb group mt-8 flex items-center gap-4 overflow-hidden rounded-card border border-border p-4 transition-colors hover:border-border-strong"
+        >
+          <MiniOrb />
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-bold text-ink">Your network map</span>
+            <span className="block text-sm text-muted">
+              See everyone you can reach, {profile.reach_score ?? 0} {profile.reach_score === 1 ? "person" : "people"} and counting.
+            </span>
+          </span>
+          <Icon name="chevronRight" className="h-5 w-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
+        </Link>
+
         {/* Suggested for you */}
         {suggested.length > 0 && (
           <section className="mt-10">
@@ -282,7 +297,7 @@ export default async function Home() {
           <Link href="/app/intros?tab=want" className={`${btnSecondarySmall} justify-start`}>
             <Icon name="target" className="h-4 w-4" /> People I want to meet
           </Link>
-          <Link href="/app/network?view=orb&scope=everyone" className={`${btnSecondarySmall} justify-start`}>
+          <Link href="/app/explore?view=map" className={`${btnSecondarySmall} justify-start`}>
             <Icon name="map" className="h-4 w-4" /> Explore the map
           </Link>
         </div>
@@ -293,6 +308,41 @@ export default async function Home() {
         </p>
       </aside>
     </div>
+  );
+}
+
+// Decorative thumbnail for the map card: you at the center, a ring of
+// connections, a few friends-of-friends.
+function MiniOrb() {
+  const inner = [0, 72, 144, 216, 288].map((a) => [44 + 22 * Math.cos((a * Math.PI) / 180), 44 + 22 * Math.sin((a * Math.PI) / 180)]);
+  const outer = [36, 120, 200, 300].map((a) => [44 + 38 * Math.cos((a * Math.PI) / 180), 44 + 38 * Math.sin((a * Math.PI) / 180)]);
+  return (
+    <svg viewBox="0 0 88 88" className="h-[72px] w-[72px] shrink-0" aria-hidden="true">
+      <defs>
+        <linearGradient id="mini-ig" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stopColor="#feda75" />
+          <stop offset="35%" stopColor="#fa7e1e" />
+          <stop offset="60%" stopColor="#d62976" />
+          <stop offset="100%" stopColor="#4f5bd5" />
+        </linearGradient>
+      </defs>
+      <circle cx="44" cy="44" r="22" fill="none" stroke="#fff" strokeOpacity="0.1" />
+      <circle cx="44" cy="44" r="38" fill="none" stroke="#fff" strokeOpacity="0.06" strokeDasharray="2 4" />
+      {inner.map(([x, y], i) => (
+        <line key={i} x1="44" y1="44" x2={x} y2={y} stroke="url(#mini-ig)" strokeWidth="1.5" strokeOpacity="0.8" />
+      ))}
+      {outer.map(([x, y], i) => {
+        const [ix, iy] = inner[i % inner.length];
+        return <line key={i} x1={ix} y1={iy} x2={x} y2={y} stroke="#fff" strokeOpacity="0.2" />;
+      })}
+      {outer.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="3" fill="#3a3a3a" />
+      ))}
+      {inner.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="5" fill="#2a2a2a" stroke="url(#mini-ig)" strokeWidth="1.5" />
+      ))}
+      <circle cx="44" cy="44" r="8" fill="#f5f5f5" />
+    </svg>
   );
 }
 
@@ -330,7 +380,7 @@ function ActionCard({
   cta: string;
 }) {
   return (
-    <li className="flex items-center gap-3 rounded-card border border-border bg-surface p-4">
+    <li className="flex items-start gap-3 rounded-card border border-border bg-surface p-4 sm:items-center">
       {person ? (
         <Avatar id={person.id} name={person.full_name} src={person.avatar_url} size={48} />
       ) : (
@@ -341,8 +391,12 @@ function ActionCard({
       <div className="min-w-0 flex-1">
         <p className="text-sm text-ink">{title}</p>
         <p className="mt-0.5 line-clamp-1 text-xs text-muted">{detail}</p>
+        {/* Narrow phones: the button sits under the text instead of squeezing it. */}
+        <Link href={href} className={`${btnPrimarySmall} mt-3 sm:hidden`}>
+          {cta}
+        </Link>
       </div>
-      <Link href={href} className={btnPrimarySmall}>
+      <Link href={href} className={`${btnPrimarySmall} hidden sm:inline-flex`}>
         {cta}
       </Link>
     </li>

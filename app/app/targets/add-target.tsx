@@ -2,12 +2,14 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { input, btnPrimary, btnSecondary, cardOutlined } from "@/app/components/ui/styles";
+import { Avatar } from "@/app/components/avatar";
+import { input, btnPrimary, btnSecondary } from "@/app/components/ui/styles";
 import { addTargetAction, addTargetStubAction, type TargetActionState } from "./actions";
 
 type SearchResult = {
   id: string;
   full_name: string;
+  avatar_url?: string | null;
   headline: string | null;
   employer: string | null;
   city: string | null;
@@ -165,21 +167,31 @@ export function AddTarget({
 
       {loading && <p className="text-xs text-muted">Searching…</p>}
 
-      {trimmedQuery.length >= 2 && !loading && (
-        <ul className="flex flex-col gap-2">
+      {trimmedQuery.length >= 2 && !loading && results.length === 0 && (
+        <p className="text-sm text-muted">
+          No one on Vouchline matches &ldquo;{trimmedQuery}&rdquo;. People who&apos;ve turned off
+          &ldquo;Let people find me&rdquo; won&apos;t show up. You can still add them below.
+        </p>
+      )}
+
+      {trimmedQuery.length >= 2 && !loading && results.length > 0 && (
+        <ul className="flex flex-col gap-1">
           {results.map((r) => (
             <li key={r.id}>
               <button
                 type="button"
                 onClick={() => setSelected(r)}
-                className={`${cardOutlined} block w-full text-left`}
+                className="flex w-full items-center gap-3 rounded-input px-2 py-2 text-left hover:bg-fill"
               >
-                <p className="text-sm font-medium text-ink">{r.full_name}</p>
-                {(r.employer || r.city) && (
-                  <p className="text-xs text-muted">
-                    {[r.employer, r.city].filter(Boolean).join(" · ")}
-                  </p>
-                )}
+                <Avatar id={r.id} name={r.full_name} src={r.avatar_url ?? null} size={40} />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-ink">{r.full_name}</span>
+                  {(r.headline || r.employer || r.city) && (
+                    <span className="block truncate text-xs text-muted">
+                      {r.headline ?? [r.employer, r.city].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           ))}

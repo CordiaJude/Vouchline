@@ -24,3 +24,10 @@ export function initials(fullName: string): string {
     .map((p) => p[0]?.toUpperCase())
     .join("");
 }
+
+// Fill for places that can't use the avatar-bg-N classes (SVG in the
+// network orb). Matches the single neutral style in globals.css.
+export function avatarHex(id: string): string {
+  void id;
+  return "#2a2a2a";
+}

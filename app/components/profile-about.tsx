@@ -12,8 +12,7 @@ export type AboutProfile = {
 export function ProfileAbout({ profile }: { profile: AboutProfile }) {
   return (
     <dl className="flex flex-col gap-3 text-sm">
-      {profile.pledge_class && <Row label="Pledge class" value={profile.pledge_class} />}
-      {profile.grad_year && <Row label="Grad year" value={String(profile.grad_year)} />}
+      {profile.grad_year && <Row label="Graduates" value={String(profile.grad_year)} />}
       {profile.employer && <Row label="Employer" value={profile.employer} />}
       {profile.city && <Row label="City" value={profile.city} />}
       {profile.linkedin_url && (
@@ -31,8 +30,7 @@ export function ProfileAbout({ profile }: { profile: AboutProfile }) {
           }
         />
       )}
-      {!profile.pledge_class &&
-        !profile.grad_year &&
+      {!profile.grad_year &&
         !profile.employer &&
         !profile.city &&
         !profile.linkedin_url && <p className="text-muted">Nothing added yet.</p>}

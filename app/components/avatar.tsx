@@ -44,7 +44,7 @@ export function Avatar({
 
   return (
     <div
-      className={`${sizeClasses} flex shrink-0 items-center justify-center rounded-full font-label font-bold tracking-tight text-white ${avatarColorClass(id)} ${className ?? ""}`}
+      className={`${sizeClasses} flex shrink-0 items-center justify-center rounded-full font-label font-bold tracking-tight ${avatarColorClass(id)} ${className ?? ""}`}
       role="img"
       aria-label={name}
     >

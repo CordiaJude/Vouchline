@@ -23,7 +23,9 @@ export type IconName =
   | "map"
   | "chevronRight"
   | "check"
-  | "close";
+  | "close"
+  | "expand"
+  | "download";
 
 const ICONS: Record<IconName, { d: string; fillable?: boolean }> = {
   home: { d: "M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z", fillable: true },
@@ -52,12 +54,15 @@ const ICONS: Record<IconName, { d: string; fillable?: boolean }> = {
     d: "M12 12m-9 0a9 9 0 1018 0 9 9 0 10-18 0M12 12m-5 0a5 5 0 1010 0 5 5 0 10-10 0M12 12m-1 0a1 1 0 102 0 1 1 0 10-2 0",
   },
   building: { d: "M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M3 21h18M8 7h4M8 11h4M8 15h4" },
+  // An orbit: you at the center, a ring, one planet on it.
   map: {
-    d: "M12 12m-2 0a2 2 0 104 0 2 2 0 10-4 0M5 6m-2 0a2 2 0 104 0 2 2 0 10-4 0M19 6m-2 0a2 2 0 104 0 2 2 0 10-4 0M19 18m-2 0a2 2 0 104 0 2 2 0 10-4 0M6.5 7.5l4 3M17.5 7.5l-4 3M17.5 16.5l-4-3",
+    d: "M12 12m-2.5 0a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0M15.5 3.7A9 9 0 1020.3 8.5M19 5m-1.6 0a1.6 1.6 0 103.2 0 1.6 1.6 0 10-3.2 0",
   },
   chevronRight: { d: "M9 18l6-6-6-6" },
   check: { d: "M20 6L9 17l-5-5" },
   close: { d: "M18 6L6 18M6 6l12 12" },
+  expand: { d: "M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" },
+  download: { d: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" },
 };
 
 export function Icon({ name, className, filled = false }: { name: IconName; className?: string; filled?: boolean }) {

@@ -14,9 +14,10 @@ export function PublicProfileToggle({ enabled }: { enabled: boolean }) {
           className="mt-1 h-4 w-4"
         />
         <span>
-          Make my profile public. Anyone on Vouchline can find you in
-          Discover and send a connection request, even without a shared
-          org.
+          Let people find me. Anyone on Vouchline can find your profile by
+          name and send you a request, even without a shared org. When
+          this is off, only people in your orgs and your connections can
+          find you.
         </span>
       </label>
     </form>

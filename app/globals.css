@@ -156,16 +156,22 @@ body {
   }
 }
 
-/* Initials-avatar palette: muted, varied tones that sit well on black,
-   each dark enough for white initials (>= 4.5:1). Index order must
-   match PALETTE_SIZE in avatar-color.ts. */
-.avatar-bg-0 { background-color: #1f5f99; }
-.avatar-bg-1 { background-color: #a3324f; }
-.avatar-bg-2 { background-color: #2f6b55; }
-.avatar-bg-3 { background-color: #8a4b1c; }
-.avatar-bg-4 { background-color: #3d4a5c; }
-.avatar-bg-5 { background-color: #7a5b16; }
-.avatar-bg-6 { background-color: #1d6b72; }
-.avatar-bg-7 { background-color: #9a3b2a; }
-.avatar-bg-8 { background-color: #4b5320; }
-.avatar-bg-9 { background-color: #5b4636; }
+/* Initials avatars (no photo): one neutral style for everyone, like
+   Instagram's default -- dark gray disc, light initials. The ten classes
+   stay so avatar-color.ts keeps working; they all render the same. */
+.avatar-bg-0, .avatar-bg-1, .avatar-bg-2, .avatar-bg-3, .avatar-bg-4,
+.avatar-bg-5, .avatar-bg-6, .avatar-bg-7, .avatar-bg-8, .avatar-bg-9 {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+}
+
+/* Network orb canvas: deep space, a faint center glow, and a fine dot
+   grid for depth. */
+.bg-orb {
+  background-color: #000;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(214, 41, 118, 0.10) 0%, rgba(79, 91, 213, 0.06) 28%, transparent 60%),
+    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 100% 100%, 22px 22px;
+  background-position: center, center;
+}
