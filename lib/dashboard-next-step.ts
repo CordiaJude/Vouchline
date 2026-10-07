@@ -15,11 +15,13 @@ export function nextStep(params: {
   connectionsCount: number;
   pendingCount: number;
   openIntrosCount: number;
+  // The member dismissed the "profile X% complete" prompt.
+  skipProfile?: boolean;
 }): NextStep {
   const { completenessPercent, nextMissingLabel, connectionsCount, pendingCount, openIntrosCount } =
     params;
 
-  if (completenessPercent < 100) {
+  if (completenessPercent < 100 && !params.skipProfile) {
     return {
       headline: `Your profile is ${completenessPercent}% complete`,
       detail: `Add your ${nextMissingLabel} so people can find and recognize you.`,

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { dismissCompleteness } from "@/app/app/actions";
+import { HIDE_COMPLETENESS_COOKIE } from "@/lib/ui-cookies";
 import { ProfileAbout } from "@/app/components/profile-about";
 import { CategoryList, type CategoryEntry } from "@/app/components/category-list";
 import { Avatar } from "@/app/components/avatar";
@@ -61,6 +64,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   const receivedVouches = (vouchData ?? []) as ReceivedVouch[];
   const approvedVouches = receivedVouches.filter((v) => v.status === "approved").length;
   const completeness = profileCompleteness(profile);
+  const hideCompleteness = (await cookies()).get(HIDE_COMPLETENESS_COOKIE)?.value === "1";
   const subline = [profile.employer, profile.city].filter(Boolean).join(" · ");
 
   return (
@@ -118,22 +122,31 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
       </div>
 
       {/* Private to you: no one else ever sees this. */}
-      {completeness.percent < 100 && (
-        <Link
-          href="/app/settings"
-          className="mt-6 flex items-center gap-4 rounded-card border border-border bg-surface p-4 md:mx-10"
-        >
-          <span className="text-sm font-bold text-ink">{completeness.percent}%</span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm text-body">Add your {completeness.nextMissingLabel} to finish your profile</span>
-            <span className="mt-2 block h-1 overflow-hidden rounded-pill bg-fill">
-              <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                <rect x="0" y="0" width={completeness.percent} height="100" fill="var(--ink)" />
-              </svg>
+      {completeness.percent < 100 && !hideCompleteness && (
+        <div className="mt-6 flex items-center gap-2 rounded-card border border-border bg-surface pr-2 md:mx-10">
+          <Link href="/app/settings" className="flex min-w-0 flex-1 items-center gap-4 p-4">
+            <span className="text-sm font-bold text-ink">{completeness.percent}%</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm text-body">Add your {completeness.nextMissingLabel} to finish your profile</span>
+              <span className="mt-2 block h-1 overflow-hidden rounded-pill bg-fill">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="0" y="0" width={completeness.percent} height="100" fill="var(--ink)" />
+                </svg>
+              </span>
             </span>
-          </span>
-          <Icon name="chevronRight" className="h-4 w-4 text-muted" />
-        </Link>
+            <Icon name="chevronRight" className="h-4 w-4 text-muted" />
+          </Link>
+          <form action={dismissCompleteness}>
+            <button
+              type="submit"
+              aria-label="Dismiss"
+              title="Dismiss"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-fill hover:text-ink"
+            >
+              <Icon name="close" className="h-4 w-4" />
+            </button>
+          </form>
+        </div>
       )}
 
       {/* Tabs: icon + label, top border marks the active one (Instagram) */}

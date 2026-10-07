@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { HIDE_COMPLETENESS_COOKIE } from "@/lib/ui-cookies";
 import { Avatar } from "@/app/components/avatar";
 import { Icon } from "@/app/components/icons";
 import { InstallPrompt } from "@/app/components/install-prompt";
@@ -119,6 +121,7 @@ export default async function Home() {
     connectionsCount: s?.connections_count ?? 0,
     pendingCount: pendingList.length,
     openIntrosCount: s?.open_intros_count ?? 0,
+    skipProfile: (await cookies()).get(HIDE_COMPLETENESS_COOKIE)?.value === "1",
   });
 
   const needsYouCount =
