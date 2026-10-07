@@ -35,7 +35,9 @@ language sql stable security definer set search_path = '' as $$
   where char_length(trim(q)) >= 2
     and c.name ilike '%' || trim(q) || '%'
   order by
-    (lower(c.name) like lower(trim(q)) || '%') desc,
+    -- "university of texas" should rank "The University of Texas at
+    -- Austin" first, so a leading "The " doesn't count.
+    (regexp_replace(lower(c.name), '^the ', '') like lower(trim(q)) || '%') desc,
     (lower(c.name) like '% ' || lower(trim(q)) || '%') desc,
     char_length(c.name),
     c.name
