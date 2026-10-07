@@ -49,3 +49,4 @@ next-env.d.ts
 
 # local Claude Code preview config (machine-specific paths)
 /.claude/
+/.tools
