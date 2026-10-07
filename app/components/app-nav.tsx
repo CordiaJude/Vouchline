@@ -92,6 +92,16 @@ export function AppNav({
   }
 
   const badge = unreadNotifications > 9 ? "9+" : String(unreadNotifications);
+  // Which bottom-bar slot the glass bubble sits under (-1: none, e.g. on Messages).
+  const activeIndex = HOME.match(pathname)
+    ? 0
+    : EXPLORE.match(pathname) && !pathname.startsWith("/app/u/")
+      ? 1
+      : INTROS.match(pathname)
+        ? 3
+        : YOU.match(pathname)
+          ? 4
+          : -1;
   const msgBadge = unreadMessages > 9 ? "9+" : String(unreadMessages);
   const youActive = YOU.match(pathname);
   // The map lives at /app/explore?view=map; read the query client-side.
@@ -101,7 +111,7 @@ export function AppNav({
   return (
     <>
       {/* ================= Phones: top bar ================= */}
-      <header className="fixed inset-x-0 top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center justify-between border-b border-border bg-page/90 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:hidden">
+      <header className="glass-top fixed inset-x-0 top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center justify-between px-4 pt-[env(safe-area-inset-top)] md:hidden">
         <Logo href="/app" size={28} />
         <div className="-mr-2 flex items-center">
         <Link
@@ -130,29 +140,38 @@ export function AppNav({
         </div>
       </header>
 
-      {/* ================= Phones: bottom tab bar (icons only) ================= */}
+      {/* ================= Phones: floating "liquid glass" tab bar =================
+          A frosted capsule above the home indicator; a glass bubble slides
+          to the active tab. Classes only (CSP blocks inline styles), so the
+          bubble's position is one of five translate classes. */}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-page/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] md:hidden"
       >
-        <div className="flex h-[52px] items-stretch justify-around">
-          <BarLink tab={HOME} active={HOME.match(pathname)} />
-          <BarLink tab={EXPLORE} active={EXPLORE.match(pathname)} />
+        <div className="glass-bar pointer-events-auto relative mx-auto flex h-[60px] max-w-md items-stretch rounded-full p-1.5">
+          <span
+            aria-hidden="true"
+            className={`glass-pill absolute inset-y-1.5 left-1.5 w-[calc((100%-12px)/5)] rounded-full transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.22,1.2,0.36,1)] ${
+              BUBBLE[activeIndex] ?? "translate-x-0 opacity-0"
+            }`}
+          />
+          <BarLink tab={HOME} active={activeIndex === 0} />
+          <BarLink tab={EXPLORE} active={activeIndex === 1} />
           <button
             type="button"
             onClick={() => setAddOpen(true)}
             aria-label="Add"
             aria-haspopup="dialog"
-            className="flex flex-1 items-center justify-center text-ink"
+            className="tab-press relative z-10 flex flex-1 items-center justify-center text-ink"
           >
             <Icon name="add" className="h-[26px] w-[26px]" filled={addOpen} />
           </button>
-          <BarLink tab={INTROS} active={INTROS.match(pathname)} />
+          <BarLink tab={INTROS} active={activeIndex === 3} />
           <Link
             href={YOU.href}
             aria-label="You"
             aria-current={youActive ? "page" : undefined}
-            className="flex flex-1 items-center justify-center"
+            className="tab-press relative z-10 flex flex-1 items-center justify-center"
           >
             <YouAvatar me={me} active={youActive} />
           </Link>
@@ -305,15 +324,29 @@ function RailLink({ tab, active, badge }: { tab: Tab; active: boolean; badge?: s
   );
 }
 
+// Bubble positions for the five equal slots (translate is relative to the
+// bubble's own width, which is one slot).
+const BUBBLE: Record<number, string> = {
+  0: "translate-x-0",
+  1: "translate-x-full",
+  2: "translate-x-[200%]",
+  3: "translate-x-[300%]",
+  4: "translate-x-[400%]",
+};
+
 function BarLink({ tab, active }: { tab: Tab; active: boolean }) {
   return (
     <Link
       href={tab.href}
       aria-label={tab.label}
       aria-current={active ? "page" : undefined}
-      className="flex flex-1 items-center justify-center text-ink"
+      className="tab-press relative z-10 flex flex-1 items-center justify-center text-ink"
     >
-      <Icon name={tab.icon} className="h-[26px] w-[26px]" filled={active} />
+      <Icon
+        name={tab.icon}
+        className={`h-[26px] w-[26px] transition-transform duration-300 ease-[cubic-bezier(0.22,1.2,0.36,1)] ${active ? "scale-105" : "scale-100"}`}
+        filled={active}
+      />
     </Link>
   );
 }

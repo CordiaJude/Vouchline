@@ -104,6 +104,9 @@ export function CollegePicker({
         </>
       ) : (
         <div className="relative">
+          {/* Input + icon share their own box so the icon centers on the
+              input, not on the input plus the hint line below it. */}
+          <div className="relative">
           <input
             ref={inputRef}
             role="combobox"
@@ -139,6 +142,7 @@ export function CollegePicker({
             className={`${input} pl-11`}
           />
           <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+          </div>
           {open && q.length >= 2 && (
             <ul
               id={listId}

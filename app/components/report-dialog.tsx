@@ -25,8 +25,8 @@ export function ReportDialog({ target, what, onClose }: { target: Target; what: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label={`Report ${what}`}>
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/70" />
-      <div className="relative w-full max-w-md rounded-t-[24px] border border-border bg-surface p-5 pb-[calc(20px+env(safe-area-inset-bottom))] md:rounded-[24px] md:pb-5">
+      <button type="button" aria-label="Close" onClick={onClose} className="fade-in absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="sheet-in relative w-full max-w-md rounded-t-[24px] border border-border bg-surface p-5 pb-[calc(20px+env(safe-area-inset-bottom))] md:rounded-[24px] md:pb-5">
         {state.done ? (
           <>
             <h2 className="text-base font-bold text-ink">Thanks for letting us know</h2>

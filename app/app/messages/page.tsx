@@ -20,7 +20,7 @@ export default async function MessagesPage() {
   return (
     <>
       <LoadError errors={pageErrors} className="mx-4 mt-4" />
-      <div className="mx-auto flex h-[calc(100dvh-8.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-5xl md:h-dvh">
+      <div className="mx-auto flex h-[calc(100dvh-9.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-5xl md:h-dvh">
         <div className="w-full border-border lg:w-[360px] lg:shrink-0 lg:border-r">
           <Inbox conversations={conversations} meId={user.id} />
         </div>

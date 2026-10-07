@@ -24,7 +24,7 @@ export default async function ConversationPage({ params }: PageProps<"/app/messa
   const messages = ((msgs ?? []) as ChatMessage[]).slice().reverse();
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-8.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-5xl md:h-dvh">
+    <div className="mx-auto flex h-[calc(100dvh-9.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-5xl md:h-dvh">
       <div className="hidden w-[360px] shrink-0 border-r border-border lg:block">
         <Inbox conversations={(convs ?? []) as ConversationRow[]} meId={user.id} activeId={id} />
       </div>

@@ -36,8 +36,8 @@ export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label="Add">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/70" />
-      <div className="relative w-full max-w-md rounded-t-[24px] border border-border bg-surface px-2 pb-[calc(12px+env(safe-area-inset-bottom))] pt-2 md:rounded-[24px] md:pb-2">
+      <button type="button" aria-label="Close" onClick={onClose} className="fade-in absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="sheet-in relative w-full max-w-md rounded-t-[24px] border border-border bg-surface px-2 pb-[calc(12px+env(safe-area-inset-bottom))] pt-2 md:rounded-[24px] md:pb-2">
         <div className="mx-auto mb-2 mt-1 h-1 w-10 rounded-pill bg-border-strong md:hidden" aria-hidden="true" />
         <div className="flex items-center justify-between px-4 py-2">
           <h2 className="text-base font-bold text-ink">Add to your network</h2>
