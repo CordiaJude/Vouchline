@@ -47,6 +47,28 @@ export const profileFieldsSchema = z.object({
       )
       .optional(),
   ),
+  status: z.preprocess(
+    emptyToUndefined,
+    z.enum(["student", "working", "founder", "looking", "other"]).optional(),
+  ),
+  job_title: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().max(80, "Job title must be at most 80 characters.").optional(),
+  ),
+  industry: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().max(60).optional(),
+  ),
+  // Picked from the college list (uuid) or typed when "not listed".
+  school_id: z.preprocess(emptyToUndefined, z.string().uuid().optional()),
+  school_name: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().max(160, "School name must be at most 160 characters.").optional(),
+  ),
+  major: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().max(80, "Major must be at most 80 characters.").optional(),
+  ),
   // Set client-side by AvatarUpload (a Supabase Storage public URL), not
   // user-typed -- still validated as a URL so a tampered form field can't
   // write an arbitrary string into the column.
@@ -72,6 +94,12 @@ export function parseProfileFormData(formData: FormData) {
     city: formData.get("city"),
     linkedin_url: formData.get("linkedin_url"),
     avatar_url: formData.get("avatar_url"),
+    status: formData.get("status"),
+    job_title: formData.get("job_title"),
+    industry: formData.get("industry"),
+    school_id: formData.get("school_id"),
+    school_name: formData.get("school_name"),
+    major: formData.get("major"),
   });
 }
 
@@ -85,6 +113,12 @@ export function parseOnboardingFormData(formData: FormData) {
     city: formData.get("city"),
     linkedin_url: formData.get("linkedin_url"),
     avatar_url: formData.get("avatar_url"),
+    status: formData.get("status"),
+    job_title: formData.get("job_title"),
+    industry: formData.get("industry"),
+    school_id: formData.get("school_id"),
+    school_name: formData.get("school_name"),
+    major: formData.get("major"),
     is_18_plus: formData.get("is_18_plus") === "on",
   });
 }

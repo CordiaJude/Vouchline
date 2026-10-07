@@ -61,7 +61,7 @@ export default async function OtherProfilePage({
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, job_title, industry, school_name, major, status",
     )
     .eq("id", id)
     .is("deleted_at", null)

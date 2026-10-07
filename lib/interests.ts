@@ -53,6 +53,7 @@ export const GOALS: { value: string; label: string }[] = [
   { value: "find_mentor", label: "Find a mentor" },
   { value: "mentor_others", label: "Mentor others" },
   { value: "make_friends", label: "Make friends" },
+  { value: "make_intros", label: "Introduce people I know" },
 ];
 
 const ALL_INTERESTS = new Map(INTEREST_GROUPS.flatMap((g) => g.items).map((i) => [i.value, i.label]));

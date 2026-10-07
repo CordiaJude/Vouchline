@@ -3,7 +3,9 @@
 import { useActionState } from "react";
 import { ProfileField } from "@/app/components/profile-field";
 import { AvatarUpload } from "@/app/components/avatar-upload";
-import { btnPrimary } from "@/app/components/ui/styles";
+import { CollegePicker } from "@/app/components/college-picker";
+import { INDUSTRIES, STATUSES } from "@/lib/profile-options";
+import { btnPrimary, input } from "@/app/components/ui/styles";
 import { updateProfile, type SettingsState } from "./actions";
 
 type ProfileDefaults = {
@@ -16,6 +18,12 @@ type ProfileDefaults = {
   city: string | null;
   linkedin_url: string | null;
   avatar_url: string | null;
+  status: string | null;
+  job_title: string | null;
+  industry: string | null;
+  school_id: string | null;
+  school_name: string | null;
+  major: string | null;
 };
 
 const initialState: SettingsState = {};
@@ -49,18 +57,60 @@ export function SettingsForm({ profile }: { profile: ProfileDefaults }) {
         defaultValue={profile.headline ?? ""}
         error={fieldError("headline")}
       />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="status" className="text-sm font-semibold text-ink">
+          What you do now
+        </label>
+        <select id="status" name="status" defaultValue={profile.status ?? ""} className={input}>
+          <option value="">Prefer not to say</option>
+          {STATUSES.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label.replace(/^I'm |^I /, "").replace(/^./, (c) => c.toUpperCase())}
+            </option>
+          ))}
+        </select>
+      </div>
       <ProfileField
-        label="Graduation year (if you're in college)"
+        label="Job title"
+        name="job_title"
+        defaultValue={profile.job_title ?? ""}
+        error={fieldError("job_title")}
+      />
+      <ProfileField
+        label="Company"
+        name="employer"
+        defaultValue={profile.employer ?? ""}
+        error={fieldError("employer")}
+      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="industry" className="text-sm font-semibold text-ink">
+          Industry
+        </label>
+        <select id="industry" name="industry" defaultValue={profile.industry ?? ""} className={input}>
+          <option value="">Not set</option>
+          {INDUSTRIES.map((i) => (
+            <option key={i} value={i}>
+              {i}
+            </option>
+          ))}
+        </select>
+      </div>
+      <CollegePicker
+        label="School"
+        defaultValue={profile.school_name ? { id: profile.school_id, name: profile.school_name } : null}
+      />
+      <ProfileField
+        label="Major"
+        name="major"
+        defaultValue={profile.major ?? ""}
+        error={fieldError("major")}
+      />
+      <ProfileField
+        label="Graduation year"
         name="grad_year"
         type="number"
         defaultValue={profile.grad_year ? String(profile.grad_year) : ""}
         error={fieldError("grad_year")}
-      />
-      <ProfileField
-        label="Employer"
-        name="employer"
-        defaultValue={profile.employer ?? ""}
-        error={fieldError("employer")}
       />
       <ProfileField
         label="City"

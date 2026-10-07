@@ -16,6 +16,8 @@ export type SuggestedPerson = {
   shared_interests: string[];
   shared_goals: string[];
   mutual_count: number;
+  same_school?: string | null;
+  same_industry?: string | null;
   // Already-resolved labels for display (labels live in lib/interests).
   reasons: string[];
 };
@@ -41,8 +43,12 @@ export function SuggestedPersonCard({ person }: { person: SuggestedPerson }) {
       </Link>
       {subtitle && <p className="line-clamp-1 text-xs text-muted">{subtitle}</p>}
       <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs text-body">
-        {person.reasons.length > 0
+        {person.same_school
+          ? `Also went to ${person.same_school}`
+          : person.reasons.length > 0
           ? `You both like ${person.reasons.slice(0, 3).join(", ")}`
+          : person.same_industry
+          ? `Also in ${person.same_industry}`
           : person.mutual_count > 0
             ? `${person.mutual_count} mutual connection${person.mutual_count === 1 ? "" : "s"}`
             : "New to your network"}

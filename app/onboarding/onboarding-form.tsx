@@ -1,26 +1,50 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef, useState, type ReactNode } from "react";
 import { ProfileField } from "@/app/components/profile-field";
 import { AvatarUpload } from "@/app/components/avatar-upload";
-import { createProfile, type OnboardingState } from "./actions";
-import { btnPrimary, btnSecondary } from "@/app/components/ui/styles";
-import { INTEREST_GROUPS, GOALS } from "@/lib/interests";
+import { CollegePicker } from "@/app/components/college-picker";
 import { ToggleChip } from "@/app/components/toggle-chip";
+import { createProfile, type OnboardingState } from "./actions";
+import { btnPrimary, btnSecondary, input } from "@/app/components/ui/styles";
+import { INTEREST_GROUPS, GOALS } from "@/lib/interests";
+import {
+  STATUSES,
+  INDUSTRIES,
+  STUDENT_GRAD_YEARS,
+  ALUMNI_GRAD_YEARS,
+  suggestHeadline,
+  type Status,
+} from "@/lib/profile-options";
 
 const initialState: OnboardingState = {};
 
+// Five short steps. Every question powers something -- search, intro
+// paths, or "Suggested for you" -- and anything not essential is
+// optional (each extra required field costs signups).
 const STEPS = [
-  { title: "About you", subtitle: "Just enough for people to recognize you." },
-  { title: "School", subtitle: "Helps us connect you with classmates." },
-  { title: "What are you into?", subtitle: "We'll use this to suggest people you'll click with. Pick a few." },
-  { title: "Finishing touches", subtitle: "All optional except the last box." },
+  { title: "Let's set up your profile", subtitle: "This is how people will recognize you." },
+  { title: "What do you do?", subtitle: "So we can connect you with the right people." },
+  { title: "What brings you here?", subtitle: "Pick everything that applies. We match people on this." },
+  { title: "What are you into?", subtitle: "Optional, but it makes your suggestions much better." },
+  { title: "Last step", subtitle: "Here's your headline. Change anything you like." },
 ] as const;
 
-// Fields that live on step 1 -- if the server rejects one of these, jump
-// back there so the error is visible.
-const STEP1_FIELDS = ["full_name", "headline", "employer", "city"];
-const STEP2_FIELDS = ["grad_year"];
+// Server-side validation errors jump back to the step that owns the field.
+const FIELD_STEP: Record<string, number> = {
+  full_name: 0,
+  city: 0,
+  status: 1,
+  job_title: 1,
+  employer: 1,
+  industry: 1,
+  school_name: 1,
+  school_id: 1,
+  major: 1,
+  grad_year: 1,
+  headline: 4,
+  linkedin_url: 4,
+};
 
 export function OnboardingForm({
   userId,
@@ -34,28 +58,38 @@ export function OnboardingForm({
   const [state, formAction, pending] = useActionState(createProfile, initialState);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [step, setStep] = useState(0);
-  const [picked, setPicked] = useState(0);
-  const [inCollege, setInCollege] = useState<"yes" | "no" | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Server-side validation failed on an earlier step's field: show it --
-  // adjusted during render rather than in an effect.
+  // Answers that change later questions or the suggested headline.
+  const [status, setStatus] = useState<Status | null>(null);
+  const [wentToCollege, setWentToCollege] = useState<"yes" | "no" | null>(null);
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [jobTitle, setJobTitle] = useState("");
+  const [company, setCompany] = useState("");
+  const [major, setMajor] = useState("");
+  const [goalCount, setGoalCount] = useState(0);
+  const [interestCount, setInterestCount] = useState(0);
+  const [headline, setHeadline] = useState("");
+  const [headlineEdited, setHeadlineEdited] = useState(false);
+
+  // Jump to the step with a server-side error -- adjusted during render.
   const [lastState, setLastState] = useState(state);
   if (state !== lastState) {
     setLastState(state);
-    const bad = Object.keys(state.fieldErrors ?? {});
-    if (bad.some((k) => STEP1_FIELDS.includes(k))) {
-      setStep(0);
-    } else if (bad.some((k) => STEP2_FIELDS.includes(k))) {
-      setStep(1);
-    }
+    const steps = Object.keys(state.fieldErrors ?? {}).map((k) => FIELD_STEP[k] ?? 0);
+    if (steps.length) setStep(Math.min(...steps));
   }
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
+  const register = (i: number, el: HTMLDivElement | null) => {
+    stepRefs.current[i] = el;
+  };
+  const isStudent = status === "student";
+  const hasJob = status === "working" || status === "founder";
 
-  // Only advance when this step's own required fields are valid; the
-  // browser can't focus an invalid field on a hidden step at submit time.
   function next() {
+    setStepError(null);
     const container = stepRefs.current[step];
     const fields = container?.querySelectorAll<HTMLInputElement>("input, select, textarea") ?? [];
     for (const f of fields) {
@@ -64,7 +98,19 @@ export function OnboardingForm({
         return;
       }
     }
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (step === 1 && !status) {
+      setStepError("Pick the option that fits you best.");
+      return;
+    }
+    if (step === 2 && goalCount === 0) {
+      setStepError("Pick at least one. It's how we know who to introduce you to.");
+      return;
+    }
+    const nextStep = Math.min(step + 1, STEPS.length - 1);
+    if (nextStep === 4 && !headlineEdited) {
+      setHeadline(suggestHeadline({ status, jobTitle, company, schoolName, major }));
+    }
+    setStep(nextStep);
   }
 
   return (
@@ -79,19 +125,20 @@ export function OnboardingForm({
         }
       }}
       onChange={(e) => {
-        const t = e.target as unknown as HTMLInputElement;
-        if (t.name === "interests" || t.name === "goals") {
-          setPicked(e.currentTarget.querySelectorAll('input[name="interests"]:checked, input[name="goals"]:checked').length);
-        }
+        const form = e.currentTarget;
+        const name = (e.target as unknown as HTMLInputElement).name;
+        if (name === "goals") setGoalCount(form.querySelectorAll('input[name="goals"]:checked').length);
+        if (name === "interests") setInterestCount(form.querySelectorAll('input[name="interests"]:checked').length);
       }}
     >
       {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
       {avatarUrl && <input type="hidden" name="avatar_url" value={avatarUrl} />}
+      {status && <input type="hidden" name="status" value={status} />}
 
       {/* Progress */}
       <div className="flex gap-1.5" aria-hidden="true">
         {STEPS.map((_, i) => (
-          <span key={i} className={`h-1 flex-1 rounded-pill ${i <= step ? "bg-ink" : "bg-fill"}`} />
+          <span key={i} className={`h-1 flex-1 rounded-pill transition-colors ${i <= step ? "bg-ink" : "bg-fill"}`} />
         ))}
       </div>
       <p className="mt-5 text-xs font-semibold text-muted">
@@ -104,78 +151,122 @@ export function OnboardingForm({
         <p className="mt-4 rounded-input bg-danger/10 p-3 text-sm text-danger">{state.formError}</p>
       )}
 
-      {/* Step 1: about you */}
-      <div
-        ref={(el) => {
-          stepRefs.current[0] = el;
-        }}
-        className={step === 0 ? "mt-6 flex flex-col gap-4" : "hidden"}
-      >
+      {/* ===== 1. You ===== */}
+      <Step i={0} step={step} register={register}>
         <AvatarUpload userId={userId} fullName={defaultFullName ?? ""} avatarUrl={null} onUploaded={setAvatarUrl} />
-        <ProfileField
-          label="Full name"
-          name="full_name"
-          defaultValue={defaultFullName}
-          required
-          error={fieldError("full_name")}
-        />
-        <ProfileField
-          label="Headline"
-          name="headline"
-          placeholder="Product designer at Northwind"
-          error={fieldError("headline")}
-        />
-        <ProfileField label="Where you work" name="employer" error={fieldError("employer")} />
-        <ProfileField label="City" name="city" error={fieldError("city")} />
-      </div>
+        <ProfileField label="Full name" name="full_name" defaultValue={defaultFullName} required error={fieldError("full_name")} />
+        <ProfileField label="City" name="city" placeholder="Dallas, TX" required error={fieldError("city")} />
+      </Step>
 
-      {/* Step 2: school -- graduation year only for current students */}
-      <div
-        ref={(el) => {
-          stepRefs.current[1] = el;
-        }}
-        className={step === 1 ? "mt-6 flex flex-col gap-4" : "hidden"}
-      >
+      {/* ===== 2. What you do ===== */}
+      <Step i={1} step={step} register={register}>
         <fieldset>
-          <legend className="text-sm font-bold text-ink">Are you in college?</legend>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {(["yes", "no"] as const).map((v) => (
+          <legend className="sr-only">What best describes you right now?</legend>
+          <div className="grid gap-2">
+            {STATUSES.map((s) => (
               <label
-                key={v}
-                className="flex h-12 cursor-pointer items-center justify-center rounded-input border border-border-strong bg-surface text-sm font-semibold text-body transition-colors has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-page has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
+                key={s.value}
+                className="flex cursor-pointer items-center gap-3 rounded-input border border-border-strong bg-surface px-4 py-3 transition-colors hover:border-ink has-[:checked]:border-ink has-[:checked]:bg-fill has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
               >
                 <input
                   type="radio"
-                  name="in_college"
-                  value={v}
-                  required
-                  checked={inCollege === v}
-                  onChange={() => setInCollege(v)}
-                  className="sr-only"
+                  name="status_choice"
+                  value={s.value}
+                  checked={status === s.value}
+                  onChange={() => setStatus(s.value)}
+                  className="h-4 w-4 accent-[var(--link)]"
                 />
-                {v === "yes" ? "Yes" : "No"}
+                <span>
+                  <span className="block text-sm font-semibold text-ink">{s.label}</span>
+                  <span className="block text-xs text-muted">{s.detail}</span>
+                </span>
               </label>
             ))}
           </div>
         </fieldset>
-        {inCollege === "yes" && (
-          <ProfileField
-            label="When do you graduate?"
-            name="grad_year"
-            type="number"
-            placeholder={String(new Date().getFullYear() + 2)}
-            error={fieldError("grad_year")}
-          />
-        )}
-      </div>
 
-      {/* Step 3: interests + goals */}
-      <div
-        ref={(el) => {
-          stepRefs.current[2] = el;
-        }}
-        className={step === 2 ? "mt-6 flex flex-col gap-6" : "hidden"}
-      >
+        {isStudent && (
+          <Section>
+            <CollegePicker label="Where do you go to school?" required onChange={setSchoolName} />
+            <SelectField
+              label="When do you graduate?"
+              name="grad_year"
+              required
+              options={STUDENT_GRAD_YEARS.map((y) => [String(y), String(y)])}
+            />
+            <TextField label="Major" name="major" placeholder="Finance" value={major} onChange={setMajor} />
+          </Section>
+        )}
+
+        {(hasJob || status === "looking") && (
+          <Section>
+            <TextField
+              label={status === "looking" ? "Most recent role" : status === "founder" ? "Your role" : "Job title"}
+              name="job_title"
+              placeholder={status === "founder" ? "Founder & CEO" : "Product Manager"}
+              required={hasJob}
+              value={jobTitle}
+              onChange={setJobTitle}
+            />
+            <TextField
+              label={status === "looking" ? "Most recent company" : status === "founder" ? "Company name" : "Company"}
+              name="employer"
+              placeholder={status === "founder" ? "Your company" : "Where you work"}
+              required={hasJob}
+              value={company}
+              onChange={setCompany}
+            />
+            <SelectField label="Industry" name="industry" required={hasJob} options={INDUSTRIES.map((i) => [i, i])} />
+          </Section>
+        )}
+
+        {status && !isStudent && (
+          <Section>
+            <fieldset>
+              <legend className="text-sm font-semibold text-ink">
+                Did you go to college? <span className="font-normal text-muted">(optional)</span>
+              </legend>
+              <p className="text-xs text-muted">Alumni are some of the warmest intros there are.</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {(["yes", "no"] as const).map((v) => (
+                  <label
+                    key={v}
+                    className="flex h-11 cursor-pointer items-center justify-center rounded-input border border-border-strong bg-surface text-sm font-semibold text-body transition-colors has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-page has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
+                  >
+                    <input
+                      type="radio"
+                      name="went_to_college"
+                      value={v}
+                      checked={wentToCollege === v}
+                      onChange={() => setWentToCollege(v)}
+                      className="sr-only"
+                    />
+                    {v === "yes" ? "Yes" : "No"}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            {wentToCollege === "yes" && (
+              <>
+                <CollegePicker label="Where did you go?" onChange={setSchoolName} />
+                <SelectField label="Graduation year" name="grad_year" options={ALUMNI_GRAD_YEARS.map((y) => [String(y), String(y)])} />
+              </>
+            )}
+          </Section>
+        )}
+      </Step>
+
+      {/* ===== 3. Goals ===== */}
+      <Step i={2} step={step} register={register}>
+        <div className="flex flex-wrap gap-2">
+          {GOALS.map((g) => (
+            <ToggleChip key={g.value} name="goals" value={g.value} label={g.label} />
+          ))}
+        </div>
+      </Step>
+
+      {/* ===== 4. Interests ===== */}
+      <Step i={3} step={step} register={register}>
         {INTEREST_GROUPS.map((group) => (
           <fieldset key={group.title}>
             <legend className="text-sm font-bold text-ink">{group.title}</legend>
@@ -186,26 +277,32 @@ export function OnboardingForm({
             </div>
           </fieldset>
         ))}
-        <fieldset>
-          <legend className="text-sm font-bold text-ink">What do you want from Vouchline?</legend>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {GOALS.map((g) => (
-              <ToggleChip key={g.value} name="goals" value={g.value} label={g.label} />
-            ))}
-          </div>
-        </fieldset>
-        <p className="text-xs text-muted">{picked === 0 ? "Nothing picked yet." : `${picked} picked.`}</p>
-      </div>
+        <p className="text-xs text-muted">{interestCount === 0 ? "Nothing picked yet." : `${interestCount} picked.`}</p>
+      </Step>
 
-      {/* Step 4: optional details + age */}
-      <div
-        ref={(el) => {
-          stepRefs.current[3] = el;
-        }}
-        className={step === 3 ? "mt-6 flex flex-col gap-4" : "hidden"}
-      >
+      {/* ===== 5. Finish ===== */}
+      <Step i={4} step={step} register={register}>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="headline" className="text-sm font-semibold text-ink">
+            Headline
+          </label>
+          <input
+            id="headline"
+            name="headline"
+            value={headline}
+            maxLength={120}
+            placeholder="What you do, in a few words"
+            onChange={(e) => {
+              setHeadline(e.target.value);
+              setHeadlineEdited(true);
+            }}
+            className={input}
+          />
+          <p className="text-xs text-muted">Shown under your name everywhere.</p>
+          {fieldError("headline") && <p className="text-sm text-danger">{fieldError("headline")}</p>}
+        </div>
         <ProfileField
-          label="LinkedIn URL"
+          label="LinkedIn URL (optional)"
           name="linkedin_url"
           type="url"
           placeholder="https://www.linkedin.com/in/you"
@@ -226,17 +323,26 @@ export function OnboardingForm({
           <span>I confirm that I am 18 years of age or older.</span>
         </label>
         {fieldError("is_18_plus") && <p className="-mt-2 text-sm text-danger">{fieldError("is_18_plus")}</p>}
-      </div>
+      </Step>
+
+      {stepError && <p className="mt-4 text-sm text-danger">{stepError}</p>}
 
       <div className="mt-8 flex gap-3">
         {step > 0 && (
-          <button type="button" onClick={() => setStep((s) => s - 1)} className={btnSecondary}>
+          <button
+            type="button"
+            onClick={() => {
+              setStepError(null);
+              setStep((s) => s - 1);
+            }}
+            className={btnSecondary}
+          >
             Back
           </button>
         )}
         {step < STEPS.length - 1 ? (
           <button type="button" onClick={next} className={`${btnPrimary} flex-1`}>
-            {step === 2 && picked === 0 ? "Skip for now" : "Continue"}
+            {step === 3 && interestCount === 0 ? "Skip for now" : "Continue"}
           </button>
         ) : (
           <button type="submit" disabled={pending} className={`${btnPrimary} flex-1`}>
@@ -248,3 +354,95 @@ export function OnboardingForm({
   );
 }
 
+// Every step stays mounted (so all answers submit together); only the
+// current one is visible.
+function Step({
+  i,
+  step,
+  register,
+  children,
+}: {
+  i: number;
+  step: number;
+  register: (i: number, el: HTMLDivElement | null) => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      ref={(el) => register(i, el)}
+      className={step === i ? "mt-6 flex flex-col gap-5" : "hidden"}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Section({ children }: { children: ReactNode }) {
+  return <div className="flex flex-col gap-4 border-t border-border pt-5">{children}</div>;
+}
+
+function TextField({
+  label,
+  name,
+  placeholder,
+  required,
+  value,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  placeholder?: string;
+  required?: boolean;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={name} className="text-sm font-semibold text-ink">
+        {label}
+        {!required && <span className="font-normal text-muted"> (optional)</span>}
+      </label>
+      <input
+        id={name}
+        name={name}
+        value={value}
+        required={required}
+        placeholder={placeholder}
+        maxLength={80}
+        onChange={(e) => onChange(e.target.value)}
+        className={input}
+      />
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  name,
+  options,
+  required,
+}: {
+  label: string;
+  name: string;
+  options: [string, string][];
+  required?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={name} className="text-sm font-semibold text-ink">
+        {label}
+        {!required && <span className="font-normal text-muted"> (optional)</span>}
+      </label>
+      <select id={name} name={name} required={required} defaultValue="" className={input}>
+        <option value="" disabled={required}>
+          Select…
+        </option>
+        {options.map(([v, l]) => (
+          <option key={v} value={v}>
+            {l}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}

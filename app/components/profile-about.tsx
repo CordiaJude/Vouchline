@@ -7,13 +7,35 @@ export type AboutProfile = {
   employer: string | null;
   city: string | null;
   linkedin_url: string | null;
+  job_title?: string | null;
+  industry?: string | null;
+  school_name?: string | null;
+  major?: string | null;
+  status?: string | null;
 };
 
 export function ProfileAbout({ profile }: { profile: AboutProfile }) {
   return (
     <dl className="flex flex-col gap-3 text-sm">
-      {profile.grad_year && <Row label="Graduates" value={String(profile.grad_year)} />}
-      {profile.employer && <Row label="Employer" value={profile.employer} />}
+      {(profile.job_title || profile.employer) && (
+        <Row
+          label="Work"
+          value={[profile.job_title, profile.employer].filter(Boolean).join(" at ")}
+        />
+      )}
+      {profile.industry && <Row label="Industry" value={profile.industry} />}
+      {profile.school_name && (
+        <Row
+          label={profile.status === "student" ? "School" : "Education"}
+          value={[
+            profile.school_name,
+            profile.major,
+            profile.grad_year ? `${profile.status === "student" ? "Class of " : ""}${profile.grad_year}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        />
+      )}
       {profile.city && <Row label="City" value={profile.city} />}
       {profile.linkedin_url && (
         <Row
@@ -30,7 +52,8 @@ export function ProfileAbout({ profile }: { profile: AboutProfile }) {
           }
         />
       )}
-      {!profile.grad_year &&
+      {!profile.school_name &&
+        !profile.job_title &&
         !profile.employer &&
         !profile.city &&
         !profile.linkedin_url && <p className="text-muted">Nothing added yet.</p>}

@@ -35,7 +35,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests, job_title, industry, school_name, major, status",
     )
     .eq("id", user.id)
     .is("deleted_at", null)

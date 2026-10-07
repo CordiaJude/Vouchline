@@ -30,9 +30,16 @@ export async function updateProfile(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  // A school typed by hand ("not listed") must drop any previously
+  // picked list entry, or the old school_id would linger behind the new name.
+  const update: Record<string, unknown> = { ...parsed.data };
+  if (formData.has("school_name") && !formData.get("school_id")) {
+    update.school_id = null;
+  }
+
   const { error } = await supabase
     .from("profiles")
-    .update(parsed.data)
+    .update(update)
     .eq("id", user.id);
 
   if (error) {
