@@ -144,6 +144,19 @@ export default async function ExplorePage({ searchParams }: PageProps<"/app/expl
             </p>
           )}
           <PeopleYouMayKnow roster={roster} employerOverlap={employerOverlap} />
+          <Link
+            href="/app/find-friends"
+            className="mt-8 flex items-center gap-3 rounded-card border border-border bg-surface p-4 hover:bg-fill"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fill text-ink">
+              <Icon name="users" className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-ink">Find friends from your contacts</span>
+              <span className="block text-xs text-muted">See who you already know on Vouchline.</span>
+            </span>
+            <Icon name="chevronRight" className="h-4 w-4 text-muted" />
+          </Link>
         </>
       )}
 

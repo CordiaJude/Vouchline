@@ -49,6 +49,7 @@ export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void
           <Option href="/app/connect" icon="qr" title="Show my code" detail="In person? They scan it with their phone camera." />
           <Option href="/app/explore?for=connect" icon="userPlus" title="Someone I know" detail="Find them and confirm how you know each other." />
           <Option href="/app/intros?tab=want&add=1" icon="target" title="Someone I want to meet" detail="Add them to your list and we'll find a path." />
+          <Option href="/app/find-friends" icon="users" title="Find friends from contacts" detail="See who you already know on Vouchline." />
           <li>
             <button type="button" onClick={invite} className="flex w-full items-center gap-4 rounded-input px-4 py-3 text-left hover:bg-fill">
               <OptionIcon name="share" />
