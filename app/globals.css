@@ -234,6 +234,19 @@ body {
 /* ===== Motion: fast and smooth ===== */
 html {
   -webkit-tap-highlight-color: transparent;
+  /* No double-tap zoom; taps also fire instantly. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+/* iPhone zooms into any field under 16px when you tap it, so fields are
+   16px on touch screens. */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
 }
 /* Each page fades/slides in briefly when you navigate (app/app/template.tsx). */
 @keyframes page-enter {

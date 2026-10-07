@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { NoZoom } from "@/app/components/no-zoom";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
 import { Plus_Jakarta_Sans } from "next/font/google";
@@ -37,6 +38,9 @@ export async function generateViewport(): Promise<Viewport> {
     colorScheme: theme === "system" ? "light dark" : theme,
     width: "device-width",
     initialScale: 1,
+    // Feel like an app: no pinch or double-tap zoom.
+    maximumScale: 1,
+    userScalable: false,
     viewportFit: "cover",
   };
 }
@@ -48,7 +52,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       data-theme={parseTheme((await cookies()).get(THEME_COOKIE)?.value)}
       className={`${jakarta.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-body">{children}</body>
+      <body className="min-h-full flex flex-col font-body">
+        <NoZoom />
+        {children}
+      </body>
     </html>
   );
 }
