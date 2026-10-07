@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/app/components/avatar";
 import { Icon } from "@/app/components/icons";
@@ -34,6 +35,7 @@ export function ChatThread({
   const [error, setError] = useState<string | null>(null);
   const [olderDone, setOlderDone] = useState(initialMessages.length < 50);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
   const people = new Map([me, ...others].map((p) => [p.id, p]));
 
@@ -49,13 +51,19 @@ export function ChatThread({
     });
   }, []);
 
-  const markRead = useCallback(() => {
-    void sb().rpc("mark_conversation_read", { p_conversation: conversationId });
-  }, [conversationId, sb]);
+  const markRead = useCallback(
+    () => sb().rpc("mark_conversation_read", { p_conversation: conversationId }),
+    [conversationId, sb],
+  );
+
+  // Opening the chat reads it; then refresh the server-rendered nav so
+  // the Messages badge drops this conversation right away.
+  useEffect(() => {
+    void markRead().then(() => router.refresh());
+  }, [markRead, router]);
 
   // Realtime + fallback poll.
   useEffect(() => {
-    markRead();
     const client = sb();
     const channel = client
       .channel(`conversation:${conversationId}`)
@@ -64,7 +72,7 @@ export function ChatThread({
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
           merge([payload.new as ChatMessage]);
-          markRead();
+          void markRead();
         },
       )
       .subscribe();
@@ -72,7 +80,11 @@ export function ChatThread({
     const poll = setInterval(async () => {
       if (document.visibilityState !== "visible") return;
       const { data } = await client.rpc("conversation_messages", { p_conversation: conversationId, p_limit: 20 });
-      if (data) merge(data as ChatMessage[]);
+      if (data) {
+        merge(data as ChatMessage[]);
+        // Anything that arrived while you're looking at the chat is read.
+        void markRead();
+      }
     }, 10000);
 
     return () => {
