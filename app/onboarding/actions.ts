@@ -50,6 +50,34 @@ export async function createProfile(
     return { formError: error.message };
   }
 
+  // Start their history with what they just told us (editable in Settings).
+  const d = parsed.data;
+  type HistoryRow = {
+    user_id: string;
+    kind: "work" | "education";
+    organization: string;
+    title?: string | null;
+    school_id?: string | null;
+    field?: string | null;
+    end_year?: number | null;
+  };
+  const history: HistoryRow[] = [];
+  if (d.employer) history.push({ user_id: user.id, kind: "work", title: d.job_title ?? null, organization: d.employer });
+  if (d.school_name) {
+    history.push({
+      user_id: user.id,
+      kind: "education",
+      organization: d.school_name,
+      school_id: d.school_id ?? null,
+      field: d.major ?? null,
+      end_year: d.grad_year ?? null,
+    });
+  }
+  if (history.length) {
+    const { error: historyError } = await supabase.from("profile_experiences").insert(history);
+    if (historyError) console.error("onboarding: couldn't seed experience history", historyError);
+  }
+
   await supabase.rpc("log_event", { p_name: "onboarded" });
 
   // Org membership is optional at signup -- only redeemed if the

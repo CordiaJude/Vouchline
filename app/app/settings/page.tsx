@@ -11,6 +11,8 @@ import { BlockedList } from "./blocked-list";
 import { InterestsSettings } from "./interests-settings";
 import { VerifyEmailCard } from "./verify-email-card";
 import { AppearanceSettings } from "./appearance-settings";
+import { ExperienceEditor, SkillsEditor } from "./experience-editor";
+import type { Experience } from "@/app/components/experience-list";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
 import { heading1, btnSecondarySmall } from "@/app/components/ui/styles";
@@ -32,7 +34,7 @@ export default async function SettingsPage() {
   const loaded1 = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, sticker_mode, is_public, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, timezone, interests, goals, status, job_title, industry, school_id, school_name, major, username, verified_school_domain, verified_work_domain",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, sticker_mode, is_public, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, timezone, interests, goals, status, job_title, industry, school_id, school_name, major, username, verified_school_domain, verified_work_domain, skills",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -42,6 +44,13 @@ export default async function SettingsPage() {
   if (!profile) {
     redirect("/onboarding");
   }
+
+  const expResult = await supabase
+    .from("profile_experiences")
+    .select("id, kind, title, organization, school_id, field, start_year, end_year, description")
+    .eq("user_id", profile.id);
+  pageErrors.push(...loadErrors(expResult));
+  const experiences = (expResult.data ?? []) as Experience[];
 
   // Admin entry point for phones -- the desktop rail's More menu has it too.
   const loaded2 = await supabase
@@ -91,6 +100,14 @@ export default async function SettingsPage() {
               <VerifyEmailCard kind="work" verifiedDomain={profile.verified_work_domain} />
               <VerifyEmailCard kind="school" verifiedDomain={profile.verified_school_domain} />
             </div>
+          </SettingsSection>
+
+          <SettingsSection title="Experience & education">
+            <ExperienceEditor userId={profile.id} experiences={experiences} />
+          </SettingsSection>
+
+          <SettingsSection title="Skills">
+            <SkillsEditor userId={profile.id} skills={profile.skills ?? []} />
           </SettingsSection>
 
           <SettingsSection title="Interests">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { VouchList, type Vouch } from "@/app/components/vouch-list";
+import { ExperienceList, type Experience } from "@/app/components/experience-list";
 import { VerifiedBadge } from "@/app/components/verified-badge";
 import { VouchComposer } from "@/app/components/vouch-composer";
 import { openDirectChat } from "@/app/app/messages/actions";
@@ -67,7 +68,7 @@ export default async function OtherProfilePage({
   const loaded2 = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, job_title, industry, school_name, major, status, verified_school_domain, verified_work_domain",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, job_title, industry, school_name, major, status, verified_school_domain, verified_work_domain, skills",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -78,6 +79,13 @@ export default async function OtherProfilePage({
   if (!profile) {
     notFound();
   }
+
+  const expResult = await supabase
+    .from("profile_experiences")
+    .select("id, kind, title, organization, school_id, field, start_year, end_year, description")
+    .eq("user_id", profile.id);
+  pageErrors.push(...loadErrors(expResult));
+  const experiences = (expResult.data ?? []) as Experience[];
 
   const loaded1 = await Promise.all([
     supabase
@@ -203,6 +211,7 @@ export default async function OtherProfilePage({
             {activeTab === "about" ? (
               <>
                 <ProfileAbout profile={profile} />
+              <ExperienceList experiences={experiences} skills={profile.skills ?? []} />
                 <section className="mt-8">
                   <h2 className="text-base font-bold text-ink">
                     Vouches{vouches.length > 0 && <span className="ml-1.5 font-semibold text-muted">{vouches.length}</span>}

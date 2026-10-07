@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { dismissCompleteness } from "@/app/app/actions";
 import { HIDE_COMPLETENESS_COOKIE } from "@/lib/ui-cookies";
 import { ProfileAbout } from "@/app/components/profile-about";
+import { ExperienceList, type Experience } from "@/app/components/experience-list";
 import { CategoryList, type CategoryEntry } from "@/app/components/category-list";
 import { Avatar } from "@/app/components/avatar";
 import { Icon } from "@/app/components/icons";
@@ -45,7 +46,7 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   const loaded2 = await supabase
     .from("profiles")
     .select(
-      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests, job_title, industry, school_name, major, status, username, verified_school_domain, verified_work_domain",
+      "id, full_name, headline, grad_year, pledge_class, employer, city, linkedin_url, avatar_url, reach_score, interests, job_title, industry, school_name, major, status, username, verified_school_domain, verified_work_domain, skills",
     )
     .eq("id", user.id)
     .is("deleted_at", null)
@@ -53,6 +54,12 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
   pageErrors.push(...loadErrors(loaded2));
   const { data: profile } = loaded2;
   if (!profile) redirect("/onboarding");
+  const expResult = await supabase
+    .from("profile_experiences")
+    .select("id, kind, title, organization, school_id, field, start_year, end_year, description")
+    .eq("user_id", user.id);
+  pageErrors.push(...loadErrors(expResult));
+  const experiences = (expResult.data ?? []) as Experience[];
 
   const loaded1 = await Promise.all([
     supabase.rpc("dashboard_stats").single(),
@@ -168,7 +175,10 @@ export default async function YouPage({ searchParams }: PageProps<"/app/me">) {
           {activeTab === "vouches" ? (
             <ReceivedVouches vouches={receivedVouches} />
           ) : activeTab === "about" ? (
-            <ProfileAbout profile={profile} />
+            <>
+              <ProfileAbout profile={profile} />
+              <ExperienceList experiences={experiences} skills={profile.skills ?? []} />
+            </>
           ) : (
             <>
               <div className="flex items-center justify-between">
