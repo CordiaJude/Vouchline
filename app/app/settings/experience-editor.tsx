@@ -265,18 +265,36 @@ export function SkillsEditor({ userId, skills }: { userId: string; skills: strin
   const [text, setText] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  function add(raw: string) {
+  // Returns the list with `raw` added (if it's new), so Save can include
+  // whatever is still typed in the box.
+  function withSkill(cur: string[], raw: string): string[] {
     const s = raw.trim().replace(/\s+/g, " ").slice(0, 40);
-    if (!s || list.some((x) => x.toLowerCase() === s.toLowerCase()) || list.length >= 30) return;
-    setList((l) => [...l, s]);
+    if (!s || cur.some((x) => x.toLowerCase() === s.toLowerCase()) || cur.length >= 30) return cur;
+    return [...cur, s];
+  }
+
+  function add(raw: string) {
+    setList((l) => withSkill(l, raw));
     setStatus("idle");
   }
 
   async function save() {
+    // A skill typed but not yet added (no Enter/comma) is saved too.
+    const next = text
+      .split(",")
+      .reduce((acc, part) => withSkill(acc, part), list);
+    setList(next);
+    setText("");
     setStatus("saving");
-    const { error } = await createClient().from("profiles").update({ skills: list }).eq("id", userId);
-    setStatus(error ? "error" : "saved");
-    if (!error) router.refresh();
+    const { data, error } = await createClient()
+      .from("profiles")
+      .update({ skills: next })
+      .eq("id", userId)
+      .select("skills");
+    if (error) console.error("save skills failed", error);
+    // No row back means nothing was written (e.g. signed out).
+    setStatus(error || !data || data.length === 0 ? "error" : "saved");
+    if (!error && data?.length) router.refresh();
   }
 
   return (
@@ -299,32 +317,48 @@ export function SkillsEditor({ userId, skills }: { userId: string; skills: strin
           </span>
         ))}
       </div>
-      <input
-        value={text}
-        onChange={(e) => {
-          const v = e.target.value;
-          if (v.endsWith(",")) {
-            add(v.slice(0, -1));
-            setText("");
-          } else setText(v);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
+      <div className="flex gap-2">
+        <input
+          value={text}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v.endsWith(",")) {
+              add(v.slice(0, -1));
+              setText("");
+            } else setText(v);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add(text);
+              setText("");
+            }
+          }}
+          enterKeyHint="done"
+          placeholder={list.length >= 30 ? "That's the maximum" : "Add a skill, e.g. Financial modeling"}
+          disabled={list.length >= 30}
+          className={input}
+        />
+        <button
+          type="button"
+          onClick={() => {
             add(text);
             setText("");
-          }
-        }}
-        placeholder={list.length >= 30 ? "That's the maximum" : "Add a skill, e.g. Financial modeling"}
-        disabled={list.length >= 30}
-        className={input}
-      />
+          }}
+          disabled={!text.trim() || list.length >= 30}
+          className={`${btnSecondarySmall} h-12 shrink-0`}
+        >
+          Add
+        </button>
+      </div>
       <div className="flex items-center gap-3">
         <button type="button" onClick={save} disabled={status === "saving"} className={btnPrimarySmall}>
           {status === "saving" ? "Saving…" : "Save skills"}
         </button>
         {status === "saved" && <span className="text-xs font-semibold text-success">Saved</span>}
-        {status === "error" && <span className="text-xs text-danger">Couldn&apos;t save. Try again.</span>}
+        {status === "error" && (
+          <span className="text-xs text-danger">Couldn&apos;t save. Refresh the page and try again.</span>
+        )}
       </div>
     </div>
   );
