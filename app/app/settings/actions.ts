@@ -37,10 +37,17 @@ export async function updateProfile(
     update.school_id = null;
   }
 
-  const { error } = await supabase
+  // .select() so a write that matched no row (e.g. blocked by a policy)
+  // surfaces as an error instead of a false "Saved".
+  const { data: saved, error } = await supabase
     .from("profiles")
     .update(update)
-    .eq("id", user.id);
+    .eq("id", user.id)
+    .select("id");
+
+  if (!error && (!saved || saved.length === 0)) {
+    return { formError: "Couldn't save your changes. Refresh the page and try again." };
+  }
 
   if (error) {
     if (error.code === "23505" || error.message.includes("profiles_username_key")) {
@@ -52,6 +59,10 @@ export async function updateProfile(
     return { formError: error.message };
   }
 
+  // Re-render with the saved values. Without this the form (which React
+  // resets after a successful submit) snapped back to the old values,
+  // so a successful save looked like it had been thrown away.
+  revalidatePath("/app", "layout");
   return { success: true };
 }
 
@@ -190,6 +201,6 @@ export async function saveInterests(_prevState: InterestsState, formData: FormDa
     })
     .eq("id", user.id);
   if (error) return { error: "Couldn't save. Try again." };
-  revalidatePath("/app/settings");
+  revalidatePath("/app", "layout");
   return { saved: true };
 }
