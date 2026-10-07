@@ -4,6 +4,7 @@ import * as z from "zod/v4";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { extractText, getDocumentProxy } from "unpdf";
 import { askStructured, aiErrorMessage } from "@/lib/ai";
 import { INDUSTRIES } from "@/lib/profile-options";
 
@@ -33,7 +34,7 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 // Reads a resume / LinkedIn "Save to PDF" and suggests profile fields.
 // Nothing is saved here -- the member reviews and applies (applyResume).
-// The PDF goes only to Claude for this one request; it isn't stored.
+// The PDF's text goes only to the AI for this one request; it isn't stored.
 export async function readResume(_prev: ResumeState, formData: FormData): Promise<ResumeState> {
   const supabase = await createClient();
   const {
@@ -49,8 +50,21 @@ export async function readResume(_prev: ResumeState, formData: FormData): Promis
   const { error: rl } = await supabase.rpc("check_and_log_ai_draft");
   if (rl) return { error: rl.message.includes("rate_limited_daily") ? "You've hit today's AI limit." : "Give it a few seconds." };
 
+  // Groq takes text, so pull the words out of the PDF here.
+  let resumeText = "";
   try {
-    const data = Buffer.from(await file.arrayBuffer()).toString("base64");
+    const pdf = await getDocumentProxy(new Uint8Array(await file.arrayBuffer()));
+    const { text } = await extractText(pdf, { mergePages: true });
+    resumeText = (Array.isArray(text) ? text.join("\n") : text).replace(/[ \t]+/g, " ").trim().slice(0, 40000);
+  } catch (err) {
+    console.error("[resume] couldn't read PDF", err);
+    return { error: "We couldn't read that PDF. Try exporting it again." };
+  }
+  if (resumeText.length < 50) {
+    return { error: "That PDF has no readable text (it may be a scanned image). Try a text-based PDF." };
+  }
+
+  try {
     const suggestions = await askStructured({
       schema: Extracted,
       maxTokens: 6000,
@@ -60,10 +74,8 @@ export async function readResume(_prev: ResumeState, formData: FormData): Promis
         "Copy facts exactly as written; never invent or embellish. Leave anything not in the document " +
         `as null. Industry must be one of: ${INDUSTRIES.join(", ")} -- or null. Ignore contact details ` +
         "(email, phone, address).",
-      content: [
-        { type: "document", source: { type: "base64", media_type: "application/pdf", data } },
-        { type: "text", text: "Extract the profile details." },
-      ],
+      name: "resume_profile",
+      content: `Extract the profile details from this resume:\n\n${resumeText}`,
     });
     return { suggestions };
   } catch (err) {

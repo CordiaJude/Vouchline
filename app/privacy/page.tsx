@@ -84,12 +84,12 @@ export default function PrivacyPage() {
 
       <Section title="AI features">
         <p>
-          Some features use AI from Anthropic (the makers of Claude): writing intro messages, turning a plain-English
+          Some features use AI models run by Groq: writing intro messages, turning a plain-English
           description into search filters, and reading a resume you upload to suggest profile details. For these, we
           send only what&apos;s needed: your own words, public profile details (names and headlines) of the people
-          involved, or the resume you chose. We never send closeness ratings, private connections, messages or contact
-          details. Resumes aren&apos;t stored by us after the suggestions are made. Anthropic processes this data to
-          return the result, under its commercial terms.
+          involved, or the text of the resume you chose. We never send closeness ratings, private connections, messages
+          or contact details. Resumes aren&apos;t stored by us after the suggestions are made. Groq processes this data to
+          return the result, under its terms of service.
         </p>
       </Section>
 
@@ -101,7 +101,7 @@ export default function PrivacyPage() {
             "Vercel: hosting",
             "Google: Google sign-in, if you use it",
             "Resend: sending email (sign-in, verification codes, intro updates)",
-            "Anthropic: the AI features above",
+            "Groq: the AI features above",
             "Your browser's push service (Apple, Google or Mozilla): delivering notifications you turned on",
             "Sentry: error reports, if enabled",
           ]}
