@@ -9,13 +9,14 @@ import { createProfile, type OnboardingState } from "./actions";
 import { btnPrimary, btnSecondary, input } from "@/app/components/ui/styles";
 import { INTEREST_GROUPS, GOALS } from "@/lib/interests";
 import {
-  STATUSES,
   INDUSTRIES,
   STUDENT_GRAD_YEARS,
   ALUMNI_GRAD_YEARS,
   suggestHeadline,
   type Status,
 } from "@/lib/profile-options";
+
+type Work = "working" | "founder" | "looking" | "other" | "none";
 
 const initialState: OnboardingState = {};
 
@@ -62,7 +63,13 @@ export function OnboardingForm({
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Answers that change later questions or the suggested headline.
-  const [status, setStatus] = useState<Status | null>(null);
+  // Two independent answers: students can also work.
+  const [student, setStudent] = useState<"yes" | "no" | null>(null);
+  const [work, setWork] = useState<Work | null>(null);
+  // Stored profile status: "student" wins when both apply; job fields are
+  // saved either way.
+  const status: Status | null =
+    student === "yes" ? "student" : student === "no" && work ? (work === "none" ? "other" : work) : null;
   const [wentToCollege, setWentToCollege] = useState<"yes" | "no" | null>(null);
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [jobTitle, setJobTitle] = useState("");
@@ -85,8 +92,20 @@ export function OnboardingForm({
   const register = (i: number, el: HTMLDivElement | null) => {
     stepRefs.current[i] = el;
   };
-  const isStudent = status === "student";
-  const hasJob = status === "working" || status === "founder";
+  const isStudent = student === "yes";
+  const hasJob = work === "working" || work === "founder";
+  const workOptions: { value: Work; label: string }[] = isStudent
+    ? [
+        { value: "working", label: "I have a job or internship" },
+        { value: "founder", label: "I run my own thing" },
+        { value: "none", label: "Not working right now" },
+      ]
+    : [
+        { value: "working", label: "I'm working" },
+        { value: "founder", label: "I run my own thing" },
+        { value: "looking", label: "I'm between roles" },
+        { value: "other", label: "Something else (retired, caregiving…)" },
+      ];
 
   function next() {
     setStepError(null);
@@ -98,8 +117,8 @@ export function OnboardingForm({
         return;
       }
     }
-    if (step === 1 && !status) {
-      setStepError("Pick the option that fits you best.");
+    if (step === 1 && (!student || !work)) {
+      setStepError(!student ? "Let us know if you're a student." : "Pick the option that fits your work best.");
       return;
     }
     if (step === 2 && goalCount === 0) {
@@ -108,7 +127,7 @@ export function OnboardingForm({
     }
     const nextStep = Math.min(step + 1, STEPS.length - 1);
     if (nextStep === 4 && !headlineEdited) {
-      setHeadline(suggestHeadline({ status, jobTitle, company, schoolName, major }));
+      setHeadline(suggestHeadline({ status, work, jobTitle, company, schoolName, major }));
     }
     setStep(nextStep);
   }
@@ -160,30 +179,16 @@ export function OnboardingForm({
 
       {/* ===== 2. What you do ===== */}
       <Step i={1} step={step} register={register}>
-        <fieldset>
-          <legend className="sr-only">What best describes you right now?</legend>
-          <div className="grid gap-2">
-            {STATUSES.map((s) => (
-              <label
-                key={s.value}
-                className="flex cursor-pointer items-center gap-3 rounded-input border border-border-strong bg-surface px-4 py-3 transition-colors hover:border-ink has-[:checked]:border-ink has-[:checked]:bg-fill has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
-              >
-                <input
-                  type="radio"
-                  name="status_choice"
-                  value={s.value}
-                  checked={status === s.value}
-                  onChange={() => setStatus(s.value)}
-                  className="h-4 w-4 accent-[var(--link)]"
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-ink">{s.label}</span>
-                  <span className="block text-xs text-muted">{s.detail}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <YesNo
+          legend="Are you a student?"
+          name="student_choice"
+          value={student}
+          onChange={(v) => {
+            setStudent(v);
+            // The work options differ for students; pick again.
+            setWork(null);
+          }}
+        />
 
         {isStudent && (
           <Section>
@@ -198,20 +203,44 @@ export function OnboardingForm({
           </Section>
         )}
 
-        {(hasJob || status === "looking") && (
+        {student && (
+          <fieldset className="border-t border-border pt-5">
+            <legend className="text-sm font-semibold text-ink">{isStudent ? "Do you also work?" : "What about work?"}</legend>
+            <div className="mt-2 grid gap-2">
+              {workOptions.map((o) => (
+                <label
+                  key={o.value}
+                  className="flex cursor-pointer items-center gap-3 rounded-input border border-border-strong bg-surface px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-ink has-[:checked]:border-ink has-[:checked]:bg-fill has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
+                >
+                  <input
+                    type="radio"
+                    name="work_choice"
+                    value={o.value}
+                    checked={work === o.value}
+                    onChange={() => setWork(o.value)}
+                    className="h-4 w-4 accent-[var(--link)]"
+                  />
+                  {o.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
+        {(hasJob || work === "looking") && (
           <Section>
             <TextField
-              label={status === "looking" ? "Most recent role" : status === "founder" ? "Your role" : "Job title"}
+              label={work === "looking" ? "Most recent role" : work === "founder" ? "Your role" : "Job title"}
               name="job_title"
-              placeholder={status === "founder" ? "Founder & CEO" : "Product Manager"}
+              placeholder={work === "founder" ? "Founder & CEO" : isStudent ? "Marketing Intern" : "Product Manager"}
               required={hasJob}
               value={jobTitle}
               onChange={setJobTitle}
             />
             <TextField
-              label={status === "looking" ? "Most recent company" : status === "founder" ? "Company name" : "Company"}
+              label={work === "looking" ? "Most recent company" : work === "founder" ? "Company name" : "Company"}
               name="employer"
-              placeholder={status === "founder" ? "Your company" : "Where you work"}
+              placeholder={work === "founder" ? "Your company" : "Where you work"}
               required={hasJob}
               value={company}
               onChange={setCompany}
@@ -220,32 +249,15 @@ export function OnboardingForm({
           </Section>
         )}
 
-        {status && !isStudent && (
+        {student === "no" && work && (
           <Section>
-            <fieldset>
-              <legend className="text-sm font-semibold text-ink">
-                Did you go to college? <span className="font-normal text-muted">(optional)</span>
-              </legend>
-              <p className="text-xs text-muted">Alumni are some of the warmest intros there are.</p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {(["yes", "no"] as const).map((v) => (
-                  <label
-                    key={v}
-                    className="flex h-11 cursor-pointer items-center justify-center rounded-input border border-border-strong bg-surface text-sm font-semibold text-body transition-colors has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-page has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
-                  >
-                    <input
-                      type="radio"
-                      name="went_to_college"
-                      value={v}
-                      checked={wentToCollege === v}
-                      onChange={() => setWentToCollege(v)}
-                      className="sr-only"
-                    />
-                    {v === "yes" ? "Yes" : "No"}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+            <YesNo
+              legend="Did you go to college?"
+              hint="Optional. Alumni are some of the warmest intros there are."
+              name="went_to_college"
+              value={wentToCollege}
+              onChange={setWentToCollege}
+            />
             {wentToCollege === "yes" && (
               <>
                 <CollegePicker label="Where did you go?" onChange={setSchoolName} />
@@ -374,6 +386,38 @@ function Step({
     >
       {children}
     </div>
+  );
+}
+
+function YesNo({
+  legend,
+  hint,
+  name,
+  value,
+  onChange,
+}: {
+  legend: string;
+  hint?: string;
+  name: string;
+  value: "yes" | "no" | null;
+  onChange: (v: "yes" | "no") => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="text-sm font-semibold text-ink">{legend}</legend>
+      {hint && <p className="text-xs text-muted">{hint}</p>}
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {(["yes", "no"] as const).map((v) => (
+          <label
+            key={v}
+            className="flex h-11 cursor-pointer items-center justify-center rounded-input border border-border-strong bg-surface text-sm font-semibold text-body transition-colors has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-page has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-link"
+          >
+            <input type="radio" name={name} value={v} checked={value === v} onChange={() => onChange(v)} className="sr-only" />
+            {v === "yes" ? "Yes" : "No"}
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 

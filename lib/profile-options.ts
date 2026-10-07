@@ -46,21 +46,35 @@ export const STUDENT_GRAD_YEARS = Array.from({ length: 7 }, (_, i) => THIS_YEAR 
 export const ALUMNI_GRAD_YEARS = Array.from({ length: THIS_YEAR - 1960 + 1 }, (_, i) => THIS_YEAR - i);
 
 // Default headline written from the answers, editable before saving.
+// `work` matters for students, who can also have a job or internship.
 export function suggestHeadline(a: {
   status: string | null;
+  work?: string | null;
   jobTitle?: string | null;
   company?: string | null;
   schoolName?: string | null;
   major?: string | null;
 }): string {
   const at = (x?: string | null) => (x ? ` at ${x}` : "");
+  const job =
+    a.work === "founder"
+      ? a.company
+        ? `${a.jobTitle || "Founder"}${at(a.company)}`
+        : a.jobTitle || "Founder"
+      : a.jobTitle
+        ? `${a.jobTitle}${at(a.company)}`
+        : a.company
+          ? `Working at ${a.company}`
+          : "";
   switch (a.status) {
-    case "student":
-      return a.major ? `${a.major} student${at(a.schoolName)}` : `Student${at(a.schoolName)}`;
+    case "student": {
+      const school = a.major ? `${a.major} student${at(a.schoolName)}` : `Student${at(a.schoolName)}`;
+      const hasJob = (a.work === "working" || a.work === "founder") && job;
+      return (hasJob ? `${school} · ${job}` : school).slice(0, 120);
+    }
     case "working":
-      return a.jobTitle ? `${a.jobTitle}${at(a.company)}` : a.company ? `Working at ${a.company}` : "";
     case "founder":
-      return a.company ? `${a.jobTitle || "Founder"}${at(a.company)}` : a.jobTitle || "Founder";
+      return job;
     case "looking":
       return a.jobTitle ? `${a.jobTitle}, open to new roles` : "Open to new roles";
     default:
