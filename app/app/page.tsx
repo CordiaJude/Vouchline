@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { HIDE_COMPLETENESS_COOKIE } from "@/lib/ui-cookies";
+import { HIDE_SETUP_COOKIE } from "@/lib/ui-cookies";
 import { Avatar } from "@/app/components/avatar";
 import { Icon } from "@/app/components/icons";
 import { InstallPrompt } from "@/app/components/install-prompt";
@@ -11,12 +11,14 @@ import { SuggestedPersonCard, type SuggestedPerson } from "@/app/components/sugg
 import { ContactRequestRow, type ContactRow } from "@/app/components/contact-request-row";
 import { interestLabel, goalLabel } from "@/lib/interests";
 import { profileCompleteness } from "@/lib/profile-completeness";
-import { nextStep } from "@/lib/dashboard-next-step";
 import { btnPrimarySmall, btnSecondarySmall } from "@/app/components/ui/styles";
+import { GetStarted, type SetupStep } from "@/app/components/get-started";
+import { QuickActions } from "@/app/components/quick-actions";
 import { LoadError, loadErrors } from "@/app/components/load-error";
 
-// Home: what needs you first (inbox-zero action cards), then what's new
-// in your network. Counts and stats live on the You tab, not here.
+// Home: a short greeting, the Get started checklist (until done or
+// dismissed), anything that needs you, quick actions, then suggestions
+// and what's new.
 
 type PendingConn = { connection_id: string; full_name: string };
 type ReachablePerson = { id: string; full_name: string; headline: string | null; avatar_url: string | null };
@@ -91,6 +93,9 @@ export default async function Home() {
       .limit(5),
     supabase.rpc("suggest_people", { p_limit: 10 }),
     supabase.rpc("my_received_vouches"),
+    supabase.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.rpc("my_target_list"),
+    supabase.rpc("unread_conversation_count"),
   ]);
   pageErrors.push(...loadErrors(...loaded1));
   const [
@@ -103,6 +108,9 @@ export default async function Home() {
     { data: targetAsks },
     { data: suggestedData },
     { data: vouchData },
+    { count: pushCount },
+    { data: targetData },
+    { data: unreadMessages },
   ] = loaded1;
   const pendingVouches = (
     (vouchData ?? []) as { id: string; author_id: string; author_name: string; author_avatar_url: string | null; body: string; status: string }[]
@@ -121,14 +129,22 @@ export default async function Home() {
   }));
 
   const completeness = profileCompleteness(profile);
-  const step = nextStep({
-    completenessPercent: completeness.percent,
-    nextMissingLabel: completeness.nextMissingLabel,
-    connectionsCount: s?.connections_count ?? 0,
-    pendingCount: pendingList.length,
-    openIntrosCount: s?.open_intros_count ?? 0,
-    skipProfile: (await cookies()).get(HIDE_COMPLETENESS_COOKIE)?.value === "1",
-  });
+  const firstName = profile.full_name.split(" ")[0];
+  const hideSetup = (await cookies()).get(HIDE_SETUP_COOKIE)?.value === "1";
+  const setupSteps: SetupStep[] = [
+    { key: "photo", label: "Add a profile photo", detail: "People connect faster with a face.", href: "/app/settings", icon: "user", done: !!profile.avatar_url },
+    {
+      key: "profile",
+      label: "Fill out your profile",
+      detail: completeness.nextMissingLabel ? `Add your ${completeness.nextMissingLabel}.` : "Headline, city and work.",
+      href: "/app/settings",
+      icon: "pencil",
+      done: completeness.percent >= 75,
+    },
+    { key: "connect", label: "Make your first connection", detail: "Show your code to someone you know.", href: "/app/connect", icon: "qr", done: (s?.connections_count ?? 0) > 0 },
+    { key: "notify", label: "Turn on notifications", detail: "Know when someone asks for an intro.", href: "/app/settings", icon: "heart", done: (pushCount ?? 0) > 0 },
+    { key: "meet", label: "Add someone you want to meet", detail: "We'll look for a path to them.", href: "/app/intros?tab=want", icon: "target", done: ((targetData as unknown[] | null)?.length ?? 0) > 0 },
+  ];
 
   const needsYouCount =
     toPassOn.length + forYou.length + pendingList.length + contactRequests.length + pendingVouches.length;
@@ -159,26 +175,19 @@ export default async function Home() {
             </section>
           )}
 
-          <InstallPrompt />
+          <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-ink">Hi, {firstName}</h1>
+          <p className="text-sm text-muted">
+            {needsYouCount > 0
+              ? `${needsYouCount} ${needsYouCount === 1 ? "thing needs" : "things need"} you`
+              : "You're all caught up"}
+          </p>
 
-          {/* Needs you */}
-          <section className="mt-6">
-            <SectionHeader title="Needs you" count={needsYouCount} />
-            {needsYouCount === 0 ? (
-              <div className="mt-3 rounded-card border border-border bg-surface p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill">
-                    <Icon name="check" className="h-3.5 w-3.5" />
-                  </span>
-                  You&apos;re all caught up
-                </div>
-                <p className="mt-3 text-base font-bold text-ink">{step.headline}</p>
-                <p className="mt-0.5 text-sm text-muted">{step.detail}</p>
-                <Link href={step.href} className={`${btnPrimarySmall} mt-4`}>
-                  {step.cta}
-                </Link>
-              </div>
-            ) : (
+          {!hideSetup && <GetStarted steps={setupSteps} />}
+
+          {/* Needs you (only when something's waiting) */}
+          {needsYouCount > 0 && (
+            <section className="mt-6">
+              <SectionHeader title="Needs you" count={needsYouCount} />
               <ul className="mt-3 flex flex-col gap-2">
                 {toPassOn.map((i) => (
                   <ActionCard
@@ -251,23 +260,40 @@ export default async function Home() {
                   </li>
                 ))}
               </ul>
-            )}
+            </section>
+          )}
+
+          {/* Quick actions */}
+          <section className="mt-6" aria-label="Quick actions">
+            <QuickActions
+              actions={[
+                { href: "/app/explore", label: "Meet someone", detail: "Search or describe them", icon: "sparkle" },
+                { href: "/app/connect", label: "Show my code", detail: "Connect in person", icon: "qr" },
+                {
+                  href: "/app/explore?view=map",
+                  label: "Your map",
+                  detail: `${profile.reach_score ?? 0} reachable`,
+                  art: <MiniOrb small />,
+                },
+                {
+                  href: "/app/messages",
+                  label: "Messages",
+                  detail: unreadMessages ? "Unread messages" : "Your chats",
+                  icon: "message",
+                  badge: typeof unreadMessages === "number" ? unreadMessages : 0,
+                },
+              ]}
+            />
           </section>
 
-          {/* Your network map */}
-          <Link
-            href="/app/explore?view=map"
-            className="bg-orb group mt-8 flex items-center gap-4 overflow-hidden rounded-card border border-border p-4 transition-colors hover:border-border-strong"
-          >
-            <MiniOrb />
-            <span className="min-w-0 flex-1">
-              <span className="block text-base font-bold text-ink">Your network map</span>
-              <span className="block text-sm text-muted">
-                See everyone you can reach, {profile.reach_score ?? 0} {profile.reach_score === 1 ? "person" : "people"} and counting.
-              </span>
-            </span>
-            <Icon name="chevronRight" className="h-5 w-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          {/* Your network at a glance (phones; desktop has the right rail) */}
+          <dl className="mt-3 grid grid-cols-3 gap-2.5 lg:hidden">
+            <GlanceStat href="/app/network" value={s?.connections_count ?? 0} label="Connections" />
+            <GlanceStat href="/app/explore?view=map" value={profile.reach_score ?? 0} label="Reachable" />
+            <GlanceStat href="/app/intros?tab=asked" value={s?.open_intros_count ?? 0} label="Open intros" />
+          </dl>
+
+          <InstallPrompt />
 
           {/* Suggested for you */}
           {suggested.length > 0 && (
@@ -348,11 +374,20 @@ export default async function Home() {
 
 // Decorative thumbnail for the map card: you at the center, a ring of
 // connections, a few friends-of-friends.
-function MiniOrb() {
+function GlanceStat({ href, value, label }: { href: string; value: number; label: string }) {
+  return (
+    <Link href={href} className="tab-press rounded-card border border-border bg-surface px-3 py-3 text-center hover:border-border-strong">
+      <dd className="text-lg font-extrabold leading-tight text-ink">{value}</dd>
+      <dt className="text-[11px] font-semibold text-muted">{label}</dt>
+    </Link>
+  );
+}
+
+function MiniOrb({ small = false }: { small?: boolean }) {
   const inner = [0, 72, 144, 216, 288].map((a) => [44 + 22 * Math.cos((a * Math.PI) / 180), 44 + 22 * Math.sin((a * Math.PI) / 180)]);
   const outer = [36, 120, 200, 300].map((a) => [44 + 38 * Math.cos((a * Math.PI) / 180), 44 + 38 * Math.sin((a * Math.PI) / 180)]);
   return (
-    <svg viewBox="0 0 88 88" className="h-[72px] w-[72px] shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 88 88" className={small ? "h-7 w-7" : "h-[72px] w-[72px] shrink-0"} aria-hidden="true">
       <defs>
         <linearGradient id="mini-ig" x1="0" y1="1" x2="1" y2="0">
           <stop offset="0%" stopColor="#feda75" />

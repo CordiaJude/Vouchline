@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { HIDE_COMPLETENESS_COOKIE, THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
+import { HIDE_COMPLETENESS_COOKIE, HIDE_SETUP_COOKIE, THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signOut() {
@@ -35,4 +35,16 @@ export async function setTheme(formData: FormData) {
     secure: process.env.NODE_ENV === "production",
   });
   revalidatePath("/", "layout");
+}
+
+// Home's "Get started" checklist: hide it for good on this device.
+export async function dismissSetup() {
+  (await cookies()).set(HIDE_SETUP_COOKIE, "1", {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365 * 5,
+    sameSite: "lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  });
+  revalidatePath("/app", "layout");
 }

@@ -6,3 +6,6 @@ export const HIDE_COMPLETENESS_COOKIE = "vl_hide_completeness";
 export const THEME_COOKIE = "vl_theme";
 export type Theme = "dark" | "light" | "system";
 export const parseTheme = (v: string | undefined): Theme => (v === "light" || v === "system" ? v : "dark");
+
+// Home's "Get started" checklist dismissed (per device).
+export const HIDE_SETUP_COOKIE = "vl_hide_setup";
