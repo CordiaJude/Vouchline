@@ -12,6 +12,7 @@ import { InterestsSettings } from "./interests-settings";
 import { VerifyEmailCard } from "./verify-email-card";
 import { AppearanceSettings } from "./appearance-settings";
 import { PushSettings } from "./push-settings";
+import { ResumeImport } from "./resume-import";
 import { ExperienceEditor, SkillsEditor } from "./experience-editor";
 import type { Experience } from "@/app/components/experience-list";
 import { cookies } from "next/headers";
@@ -101,6 +102,10 @@ export default async function SettingsPage() {
               <VerifyEmailCard kind="work" verifiedDomain={profile.verified_work_domain} />
               <VerifyEmailCard kind="school" verifiedDomain={profile.verified_school_domain} />
             </div>
+          </SettingsSection>
+
+          <SettingsSection title="Fill in from your resume">
+            <ResumeImport />
           </SettingsSection>
 
           <SettingsSection title="Experience & education">

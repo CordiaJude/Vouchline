@@ -15,6 +15,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Resume import sends a PDF (up to 5 MB) through a server action;
+    // the default cap is 1 MB.
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   async headers() {
     return [
       {

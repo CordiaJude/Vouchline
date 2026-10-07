@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { draftIntroText } from "@/lib/ai-draft";
+import { aiErrorMessage } from "@/lib/ai";
 import { sendBrokerIntroEmail } from "@/lib/email";
 import { getAuthEmail } from "@/lib/supabase/admin";
 import { getQuietHoursSettings, isQuietHoursNow } from "@/lib/quiet-hours";
@@ -67,8 +68,8 @@ export async function draftIntroAction(
       goal,
     });
     return { text };
-  } catch {
-    return { error: "Couldn't generate a draft right now." };
+  } catch (err) {
+    return { error: aiErrorMessage(err) };
   }
 }
 
