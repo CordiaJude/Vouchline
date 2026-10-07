@@ -7,6 +7,7 @@ import { WithdrawButton } from "./withdraw-button";
 import { ReportOutcomeButtons } from "./report-outcome-buttons";
 import { ReportForm } from "@/app/components/report-form";
 import { heading1, btnPrimary } from "@/app/components/ui/styles";
+import { LoadError, loadErrors } from "@/app/components/load-error";
 
 function statusLabel(status: string, masked: boolean): string {
   if (
@@ -30,6 +31,7 @@ function statusLabel(status: string, masked: boolean): string {
 export default async function IntroDetailPage({
   params,
 }: PageProps<"/app/intros/[id]">) {
+  const pageErrors: string[] = [];
   const { id } = await params;
 
   const supabase = await createClient();
@@ -41,13 +43,15 @@ export default async function IntroDetailPage({
     redirect("/login");
   }
 
-  const { data: intro } = await supabase
+  const loaded1 = await supabase
     .from("intro_requests")
     .select(
       "id, status, ask, broker_note, created_at, requester_id, broker_id, target_id, outcome_reported_at, outcome_talked, requester:profiles!intro_requests_requester_id_fkey(full_name), broker:profiles!intro_requests_broker_id_fkey(full_name), target:profiles!intro_requests_target_id_fkey(full_name)",
     )
     .eq("id", id)
     .maybeSingle();
+  pageErrors.push(...loadErrors(loaded1));
+  const { data: intro } = loaded1;
 
   if (!intro) {
     notFound();
@@ -68,77 +72,80 @@ export default async function IntroDetailPage({
   ].filter((p) => !p.mine && p.name);
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
-      <div className="w-full max-w-2xl">
-        <h1 className={heading1}>
-          {requester?.full_name} → {target?.full_name}
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          via {broker?.full_name}
-        </p>
-
-        <p className="mt-4 whitespace-pre-wrap rounded-card bg-fill p-4 text-sm text-ink">
-          {intro.ask}
-        </p>
-
-        <p className="mt-3 text-sm font-medium text-body">
-          Status: {statusLabel(intro.status, isRequester)}
-        </p>
-
-        {intro.broker_note && !isRequester && (
+    <>
+      <LoadError errors={pageErrors} className="mx-4 mt-4" />
+      <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
+        <div className="w-full max-w-2xl">
+          <h1 className={heading1}>
+            {requester?.full_name} → {target?.full_name}
+          </h1>
           <p className="mt-1 text-sm text-muted">
-            Broker note: {intro.broker_note}
+            via {broker?.full_name}
           </p>
-        )}
 
-        <div className="mt-6">
-          {isBroker && intro.status === "pending_broker" && (
-            <RespondBrokerForm introId={intro.id} />
-          )}
-          {isTarget && intro.status === "pending_target" && (
-            <RespondTargetButtons introId={intro.id} />
-          )}
-          {isRequester &&
-            ["pending_broker", "pending_target"].includes(intro.status) && (
-              <WithdrawButton introId={intro.id} />
-            )}
-          {intro.status === "accepted" && (
-            <form action={openIntroChat}>
-              <input type="hidden" name="intro_id" value={intro.id} />
-              <button type="submit" className={btnPrimary}>
-                Open group chat
-              </button>
-            </form>
-          )}
-          {intro.status === "accepted" &&
-            (isRequester || isTarget) &&
-            (intro.outcome_reported_at ? (
-              <p className="text-sm text-muted">
-                You reported: {intro.outcome_talked ? "Talked" : "Didn't talk"}
-              </p>
-            ) : (
-              <ReportOutcomeButtons introId={intro.id} />
-            ))}
-        </div>
+          <p className="mt-4 whitespace-pre-wrap rounded-card bg-fill p-4 text-sm text-ink">
+            {intro.ask}
+          </p>
 
-        {others.length > 0 && (
-          <div className="mt-8 border-t border-border pt-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted">
-              Report a problem
+          <p className="mt-3 text-sm font-medium text-body">
+            Status: {statusLabel(intro.status, isRequester)}
+          </p>
+
+          {intro.broker_note && !isRequester && (
+            <p className="mt-1 text-sm text-muted">
+              Broker note: {intro.broker_note}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {others.map((p) => (
-                <ReportForm
-                  key={p.id}
-                  reportedId={p.id}
-                  introRequestId={intro.id}
-                  label={`Report ${p.name}`}
-                />
+          )}
+
+          <div className="mt-6">
+            {isBroker && intro.status === "pending_broker" && (
+              <RespondBrokerForm introId={intro.id} />
+            )}
+            {isTarget && intro.status === "pending_target" && (
+              <RespondTargetButtons introId={intro.id} />
+            )}
+            {isRequester &&
+              ["pending_broker", "pending_target"].includes(intro.status) && (
+                <WithdrawButton introId={intro.id} />
+              )}
+            {intro.status === "accepted" && (
+              <form action={openIntroChat}>
+                <input type="hidden" name="intro_id" value={intro.id} />
+                <button type="submit" className={btnPrimary}>
+                  Open group chat
+                </button>
+              </form>
+            )}
+            {intro.status === "accepted" &&
+              (isRequester || isTarget) &&
+              (intro.outcome_reported_at ? (
+                <p className="text-sm text-muted">
+                  You reported: {intro.outcome_talked ? "Talked" : "Didn't talk"}
+                </p>
+              ) : (
+                <ReportOutcomeButtons introId={intro.id} />
               ))}
-            </div>
           </div>
-        )}
+
+          {others.length > 0 && (
+            <div className="mt-8 border-t border-border pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                Report a problem
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {others.map((p) => (
+                  <ReportForm
+                    key={p.id}
+                    reportedId={p.id}
+                    introRequestId={intro.id}
+                    label={`Report ${p.name}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

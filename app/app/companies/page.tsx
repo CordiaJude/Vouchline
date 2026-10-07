@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/app/components/empty-state";
 import { heading1, mutedText, cardOutlined, pill } from "@/app/components/ui/styles";
+import { LoadError, loadErrors } from "@/app/components/load-error";
 
 type Company = { employer: string; member_count: number };
 
 export default async function CompaniesPage() {
+  const pageErrors: string[] = [];
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,41 +18,46 @@ export default async function CompaniesPage() {
     redirect("/login");
   }
 
-  const { data } = await supabase.rpc("list_companies");
+  const loaded1 = await supabase.rpc("list_companies");
+  pageErrors.push(...loadErrors(loaded1));
+  const { data } = loaded1;
   const companies = (data ?? []) as Company[];
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
-      <div className="w-full max-w-2xl">
-        <h1 className={heading1}>Companies</h1>
-        <p className={`${mutedText} mt-2`}>
-          Browse people by employer, across your orgs and anyone public.
-        </p>
+    <>
+      <LoadError errors={pageErrors} className="mx-4 mt-4" />
+      <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
+        <div className="w-full max-w-2xl">
+          <h1 className={heading1}>Companies</h1>
+          <p className={`${mutedText} mt-2`}>
+            Browse people by employer, across your orgs and anyone public.
+          </p>
 
-        {companies.length === 0 ? (
-          <EmptyState
-            headline="No companies to browse yet"
-            detail="Companies show up here once people in your network or org add an employer to their profile."
-            cta={{ label: "Search for someone directly", href: "/app/search" }}
-          />
-        ) : (
-          <ul className="mt-6 flex flex-col gap-3">
-            {companies.map((c) => (
-              <li key={c.employer}>
-                <Link
-                  href={`/app/companies/${encodeURIComponent(c.employer)}`}
-                  className={`${cardOutlined} flex items-center justify-between`}
-                >
-                  <span className="text-sm font-medium text-ink">{c.employer}</span>
-                  <span className={pill}>
-                    {c.member_count} {c.member_count === 1 ? "person" : "people"}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+          {companies.length === 0 ? (
+            <EmptyState
+              headline="No companies to browse yet"
+              detail="Companies show up here once people in your network or org add an employer to their profile."
+              cta={{ label: "Search for someone directly", href: "/app/search" }}
+            />
+          ) : (
+            <ul className="mt-6 flex flex-col gap-3">
+              {companies.map((c) => (
+                <li key={c.employer}>
+                  <Link
+                    href={`/app/companies/${encodeURIComponent(c.employer)}`}
+                    className={`${cardOutlined} flex items-center justify-between`}
+                  >
+                    <span className="text-sm font-medium text-ink">{c.employer}</span>
+                    <span className={pill}>
+                      {c.member_count} {c.member_count === 1 ? "person" : "people"}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

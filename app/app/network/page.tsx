@@ -24,6 +24,7 @@ import {
   segment,
   segmentActive,
 } from "@/app/components/ui/styles";
+import { LoadError, loadErrors } from "@/app/components/load-error";
 
 type MyCategoryEntry = {
   category: string;
@@ -49,6 +50,7 @@ type MyConnection = {
 export default async function NetworkPage({
   searchParams,
 }: PageProps<"/app/network">) {
+  const pageErrors: string[] = [];
   const { type: typeFilter, view, sort, scope } = await searchParams;
   const isOrbView = view === "orb";
   const isCommunity = isOrbView && scope === "everyone";
@@ -63,14 +65,15 @@ export default async function NetworkPage({
     redirect("/login");
   }
 
-  const [{ data }, { data: myProfile }, { data: graphData }, { data: visData }, { data: contactData }] =
-    await Promise.all([
+  const loaded1 = await Promise.all([
     supabase.rpc("my_connections"),
     supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle(),
     isCommunity ? supabase.rpc("public_graph") : Promise.resolve({ data: null }),
     isOrbView ? Promise.resolve({ data: null }) : supabase.rpc("my_connection_visibility"),
     isOrbView ? Promise.resolve({ data: null }) : supabase.rpc("my_contacts"),
   ]);
+  pageErrors.push(...loadErrors(...loaded1));
+  const [{ data }, { data: myProfile }, { data: graphData }, { data: visData }, { data: contactData }] = loaded1;
   const contacts = ((contactData ?? []) as ContactRow[]).filter((c) => c.status === "accepted");
   // other_id -> { connection id, my own public/private choice }
   const visibility = new Map(
@@ -133,190 +136,193 @@ export default async function NetworkPage({
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
-      <div className={`w-full max-w-sm ${isCommunity ? "md:max-w-3xl" : "md:max-w-xl"}`}>
-        <div className="flex items-center justify-between">
-          <h1 className={heading1}>My network</h1>
-          <div className={segmented}>
-            <ViewToggle href={href({ view: "", scope: "" })} active={!isOrbView} label="List" />
-            <ViewToggle href={href({ view: "orb" })} active={isOrbView} label="Orb" />
-          </div>
-        </div>
-
-        {isOrbView && (
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+    <>
+      <LoadError errors={pageErrors} className="mx-4 mt-4" />
+      <div className="flex min-h-screen flex-col items-center px-4 py-6 md:py-10">
+        <div className={`w-full max-w-sm ${isCommunity ? "md:max-w-3xl" : "md:max-w-xl"}`}>
+          <div className="flex items-center justify-between">
+            <h1 className={heading1}>My network</h1>
             <div className={segmented}>
-              <ViewToggle
-                href={href({ scope: "", type: "" })}
-                active={!isCommunity}
-                label="My connections"
-              />
-              <ViewToggle
-                href={href({ scope: "everyone", type: "" })}
-                active={isCommunity}
-                label="Extended network"
-              />
+              <ViewToggle href={href({ view: "", scope: "" })} active={!isOrbView} label="List" />
+              <ViewToggle href={href({ view: "orb" })} active={isOrbView} label="Orb" />
             </div>
-            {isCommunity && (
-              <p className="text-xs text-muted">
-                Your connections, their public connections, and theirs, out to 6 steps.
-                Private connections only show to the two people in them.
-              </p>
-            )}
           </div>
-        )}
 
-        {presentTypes.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <FilterChip href={href({ type: "" })} active={!typeFilter} label="All" />
-            {presentTypes.map((t) => (
-              <FilterChip
-                key={t.value}
-                href={href({ type: t.value })}
-                active={typeFilter === t.value}
-                label={t.label}
-                color={t.color}
-              />
-            ))}
-          </div>
-        )}
+          {isOrbView && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className={segmented}>
+                <ViewToggle
+                  href={href({ scope: "", type: "" })}
+                  active={!isCommunity}
+                  label="My connections"
+                />
+                <ViewToggle
+                  href={href({ scope: "everyone", type: "" })}
+                  active={isCommunity}
+                  label="Extended network"
+                />
+              </div>
+              {isCommunity && (
+                <p className="text-xs text-muted">
+                  Your connections, their public connections, and theirs, out to 6 steps.
+                  Private connections only show to the two people in them.
+                </p>
+              )}
+            </div>
+          )}
 
-        {!isOrbView && connections.length > 0 && (
-          <div className="mt-3 flex items-center gap-2 font-label text-xs text-muted">
-            Sort:
-            <Link
-              href={href({ sort: "" })}
-              className={!isRecentSort ? "font-semibold text-ink" : "underline underline-offset-2"}
-            >
-              Name
-            </Link>
-            <Link
-              href={href({ sort: "recent" })}
-              className={isRecentSort ? "font-semibold text-ink" : "underline underline-offset-2"}
-            >
-              Recently active
-            </Link>
-          </div>
-        )}
+          {presentTypes.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <FilterChip href={href({ type: "" })} active={!typeFilter} label="All" />
+              {presentTypes.map((t) => (
+                <FilterChip
+                  key={t.value}
+                  href={href({ type: t.value })}
+                  active={typeFilter === t.value}
+                  label={t.label}
+                  color={t.color}
+                />
+              ))}
+            </div>
+          )}
 
-        {isCommunity ? (
-          communityGraph && communityGraph.links.length > 0 ? (
-            <NetworkOrb mode="community" nodes={communityGraph.nodes} links={communityGraph.links} />
-          ) : (
-            <p className={`${mutedText} mt-6`}>
-              {typeFilter
-                ? "No public connections of that type yet."
-                : "Nothing to show yet. Connections appear here once both people mark them Public."}
-            </p>
-          )
-        ) : connections.length === 0 ? (
-          <p className={`${mutedText} mt-6`}>
-            {typeFilter ? (
-              "No connections of that type yet."
+          {!isOrbView && connections.length > 0 && (
+            <div className="mt-3 flex items-center gap-2 font-label text-xs text-muted">
+              Sort:
+              <Link
+                href={href({ sort: "" })}
+                className={!isRecentSort ? "font-semibold text-ink" : "underline underline-offset-2"}
+              >
+                Name
+              </Link>
+              <Link
+                href={href({ sort: "recent" })}
+                className={isRecentSort ? "font-semibold text-ink" : "underline underline-offset-2"}
+              >
+                Recently active
+              </Link>
+            </div>
+          )}
+
+          {isCommunity ? (
+            communityGraph && communityGraph.links.length > 0 ? (
+              <NetworkOrb mode="community" nodes={communityGraph.nodes} links={communityGraph.links} />
             ) : (
-              <>
-                No confirmed connections yet.{" "}
-                <Link href="/app/connect" className={linkStyle}>
-                  Connect with someone
-                </Link>
-                .
-              </>
-            )}
-          </p>
-        ) : isOrbView ? (
-          <NetworkOrb
-            mode="mine"
-            nodes={[
-              {
-                id: "me",
-                label: myProfile?.full_name ?? "You",
-                color: ME_COLOR,
-                isMe: true,
-                avatarUrl: myProfile?.avatar_url ?? null,
-              },
-              ...connections.map((c) => ({
-                id: c.other_id,
-                label: c.full_name,
-                color: relColor(c.eff_type),
-                isMe: false,
-                avatarUrl: c.avatar_url ?? null,
-              })),
-            ]}
-            links={connections.map((c) => ({
-              source: "me",
-              target: c.other_id,
-              color: relColor(c.eff_type),
-              isFormer: c.eff_is_former,
-              strength: c.my_strength,
-            }))}
-          />
-        ) : (
-          <ul className="mt-6 flex flex-col gap-3">
-            {connections.map((c) => (
-              <li key={c.other_id} className={`${cardOutlined} flex items-start gap-3`}>
-                <Avatar id={c.other_id} name={c.full_name} src={c.avatar_url} size={40} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <Link
-                      href={`/app/u/${c.other_id}`}
-                      className="text-base font-medium text-ink underline-offset-2 hover:underline"
-                    >
-                      {c.full_name}
-                    </Link>
-                    {/* Private to you: never shown on their profile or
-                        to anyone else, and never rendered as a number. */}
-                    <span
-                      className="shrink-0 font-label text-xs text-muted"
-                      title="Your closeness rating -- only you can see this"
-                    >
-                      {closenessDots(c.my_strength)}
-                    </span>
-                  </div>
-                  {visibility.get(c.other_id) && (
-                    <VisibilityToggle
-                      connectionId={visibility.get(c.other_id)!.connection_id}
-                      isPublic={visibility.get(c.other_id)!.my_public}
-                    />
-                  )}
-                  <div className="mt-1">
-                    <CategoryList
-                      categories={c.my_categories}
-                      years={c.eff_years === 10 ? "10+ yrs known" : `${c.eff_years} yrs known`}
-                    />
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {!isOrbView && contacts.length > 0 && (
-          <section className="mt-10">
-            <h2 className="text-lg font-bold tracking-tight text-ink">Contacts</h2>
-            <p className="mt-1 text-sm text-muted">
-              People you&apos;ve added but haven&apos;t confirmed a relationship with. They don&apos;t
-              count toward intro paths until you both confirm a connection.
+              <p className={`${mutedText} mt-6`}>
+                {typeFilter
+                  ? "No public connections of that type yet."
+                  : "Nothing to show yet. Connections appear here once both people mark them Public."}
+              </p>
+            )
+          ) : connections.length === 0 ? (
+            <p className={`${mutedText} mt-6`}>
+              {typeFilter ? (
+                "No connections of that type yet."
+              ) : (
+                <>
+                  No confirmed connections yet.{" "}
+                  <Link href="/app/connect" className={linkStyle}>
+                    Connect with someone
+                  </Link>
+                  .
+                </>
+              )}
             </p>
-            <ul className="mt-3 flex flex-col gap-2">
-              {contacts.map((c) => (
-                <li key={c.request_id} className="flex items-center gap-3 rounded-card border border-border bg-surface p-3">
+          ) : isOrbView ? (
+            <NetworkOrb
+              mode="mine"
+              nodes={[
+                {
+                  id: "me",
+                  label: myProfile?.full_name ?? "You",
+                  color: ME_COLOR,
+                  isMe: true,
+                  avatarUrl: myProfile?.avatar_url ?? null,
+                },
+                ...connections.map((c) => ({
+                  id: c.other_id,
+                  label: c.full_name,
+                  color: relColor(c.eff_type),
+                  isMe: false,
+                  avatarUrl: c.avatar_url ?? null,
+                })),
+              ]}
+              links={connections.map((c) => ({
+                source: "me",
+                target: c.other_id,
+                color: relColor(c.eff_type),
+                isFormer: c.eff_is_former,
+                strength: c.my_strength,
+              }))}
+            />
+          ) : (
+            <ul className="mt-6 flex flex-col gap-3">
+              {connections.map((c) => (
+                <li key={c.other_id} className={`${cardOutlined} flex items-start gap-3`}>
                   <Avatar id={c.other_id} name={c.full_name} src={c.avatar_url} size={40} />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/app/u/${c.other_id}`} className="block truncate text-sm font-bold text-ink hover:underline">
-                      {c.full_name}
-                    </Link>
-                    {c.headline && <p className="truncate text-xs text-muted">{c.headline}</p>}
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        href={`/app/u/${c.other_id}`}
+                        className="text-base font-medium text-ink underline-offset-2 hover:underline"
+                      >
+                        {c.full_name}
+                      </Link>
+                      {/* Private to you: never shown on their profile or
+                          to anyone else, and never rendered as a number. */}
+                      <span
+                        className="shrink-0 font-label text-xs text-muted"
+                        title="Your closeness rating -- only you can see this"
+                      >
+                        {closenessDots(c.my_strength)}
+                      </span>
+                    </div>
+                    {visibility.get(c.other_id) && (
+                      <VisibilityToggle
+                        connectionId={visibility.get(c.other_id)!.connection_id}
+                        isPublic={visibility.get(c.other_id)!.my_public}
+                      />
+                    )}
+                    <div className="mt-1">
+                      <CategoryList
+                        categories={c.my_categories}
+                        years={c.eff_years === 10 ? "10+ yrs known" : `${c.eff_years} yrs known`}
+                      />
+                    </div>
                   </div>
-                  <Link href={`/app/connect/request?person=${c.other_id}`} className="text-xs font-semibold text-link hover:underline">
-                    Confirm connection
-                  </Link>
                 </li>
               ))}
             </ul>
-          </section>
-        )}
+          )}
+
+          {!isOrbView && contacts.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-lg font-bold tracking-tight text-ink">Contacts</h2>
+              <p className="mt-1 text-sm text-muted">
+                People you&apos;ve added but haven&apos;t confirmed a relationship with. They don&apos;t
+                count toward intro paths until you both confirm a connection.
+              </p>
+              <ul className="mt-3 flex flex-col gap-2">
+                {contacts.map((c) => (
+                  <li key={c.request_id} className="flex items-center gap-3 rounded-card border border-border bg-surface p-3">
+                    <Avatar id={c.other_id} name={c.full_name} src={c.avatar_url} size={40} />
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/app/u/${c.other_id}`} className="block truncate text-sm font-bold text-ink hover:underline">
+                        {c.full_name}
+                      </Link>
+                      {c.headline && <p className="truncate text-xs text-muted">{c.headline}</p>}
+                    </div>
+                    <Link href={`/app/connect/request?person=${c.other_id}`} className="text-xs font-semibold text-link hover:underline">
+                      Confirm connection
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

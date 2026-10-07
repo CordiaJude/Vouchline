@@ -13,6 +13,7 @@ import { interestLabel, goalLabel } from "@/lib/interests";
 import { profileCompleteness } from "@/lib/profile-completeness";
 import { nextStep } from "@/lib/dashboard-next-step";
 import { btnPrimarySmall, btnSecondarySmall } from "@/app/components/ui/styles";
+import { LoadError, loadErrors } from "@/app/components/load-error";
 
 // Home: what needs you first (inbox-zero action cards), then what's new
 // in your network. Counts and stats live on the You tab, not here.
@@ -52,30 +53,23 @@ function activityLabel(item: ActivityItem): string {
 }
 
 export default async function Home() {
+  const pageErrors: string[] = [];
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
+  const loaded2 = await supabase
     .from("profiles")
     .select("id, full_name, avatar_url, reach_score, headline, employer, city, grad_year, pledge_class, linkedin_url")
     .eq("id", user.id)
     .maybeSingle();
+  pageErrors.push(...loadErrors(loaded2));
+  const { data: profile } = loaded2;
   if (!profile) redirect("/onboarding");
 
-  const [
-    { data: stats },
-    { data: pending },
-    { data: reachable },
-    { data: activity },
-    { data: contacts },
-    { data: brokerAsks },
-    { data: targetAsks },
-    { data: suggestedData },
-    { data: vouchData },
-  ] = await Promise.all([
+  const loaded1 = await Promise.all([
     supabase.rpc("dashboard_stats").single(),
     supabase.rpc("pending_for_me"),
     supabase.rpc("dashboard_reachable_sample"),
@@ -98,6 +92,18 @@ export default async function Home() {
     supabase.rpc("suggest_people", { p_limit: 10 }),
     supabase.rpc("my_received_vouches"),
   ]);
+  pageErrors.push(...loadErrors(...loaded1));
+  const [
+    { data: stats },
+    { data: pending },
+    { data: reachable },
+    { data: activity },
+    { data: contacts },
+    { data: brokerAsks },
+    { data: targetAsks },
+    { data: suggestedData },
+    { data: vouchData },
+  ] = loaded1;
   const pendingVouches = (
     (vouchData ?? []) as { id: string; author_id: string; author_name: string; author_avatar_url: string | null; body: string; status: string }[]
   ).filter((v) => v.status === "pending");
@@ -128,212 +134,215 @@ export default async function Home() {
     toPassOn.length + forYou.length + pendingList.length + contactRequests.length + pendingVouches.length;
 
   return (
-    <div className="mx-auto flex w-full max-w-[1000px] gap-12 px-4 py-4 md:py-8">
-      {/* ===== Feed column ===== */}
-      <div className="mx-auto w-full max-w-[600px] min-w-0">
-        {/* People you can reach: a stories-style row */}
-        {reachableList.length > 0 && (
-          <section aria-label="People you can reach" className="-mx-4 border-b border-border pb-4 md:mx-0 md:border-none">
-            <ul className="flex gap-4 overflow-x-auto px-4 md:px-0">
-              {reachableList.map((p) => (
-                <li key={p.id} className="w-[72px] shrink-0">
-                  <Link href={`/app/u/${p.id}`} className="flex flex-col items-center gap-1.5 text-center">
-                    <span className="ring-brand-gradient p-[2.5px]">
-                      <span className="block rounded-full bg-page p-[2.5px]">
-                        <Avatar id={p.id} name={p.full_name} src={p.avatar_url} size={56} />
+    <>
+      <LoadError errors={pageErrors} className="mx-4 mt-4" />
+      <div className="mx-auto flex w-full max-w-[1000px] gap-12 px-4 py-4 md:py-8">
+        {/* ===== Feed column ===== */}
+        <div className="mx-auto w-full max-w-[600px] min-w-0">
+          {/* People you can reach: a stories-style row */}
+          {reachableList.length > 0 && (
+            <section aria-label="People you can reach" className="-mx-4 border-b border-border pb-4 md:mx-0 md:border-none">
+              <ul className="flex gap-4 overflow-x-auto px-4 md:px-0">
+                {reachableList.map((p) => (
+                  <li key={p.id} className="w-[72px] shrink-0">
+                    <Link href={`/app/u/${p.id}`} className="flex flex-col items-center gap-1.5 text-center">
+                      <span className="ring-brand-gradient p-[2.5px]">
+                        <span className="block rounded-full bg-page p-[2.5px]">
+                          <Avatar id={p.id} name={p.full_name} src={p.avatar_url} size={56} />
+                        </span>
                       </span>
-                    </span>
-                    <span className="w-full truncate text-xs text-ink">{p.full_name.split(" ")[0]}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        <InstallPrompt />
-
-        {/* Needs you */}
-        <section className="mt-6">
-          <SectionHeader title="Needs you" count={needsYouCount} />
-          {needsYouCount === 0 ? (
-            <div className="mt-3 rounded-card border border-border bg-surface p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill">
-                  <Icon name="check" className="h-3.5 w-3.5" />
-                </span>
-                You&apos;re all caught up
-              </div>
-              <p className="mt-3 text-base font-bold text-ink">{step.headline}</p>
-              <p className="mt-0.5 text-sm text-muted">{step.detail}</p>
-              <Link href={step.href} className={`${btnPrimarySmall} mt-4`}>
-                {step.cta}
-              </Link>
-            </div>
-          ) : (
-            <ul className="mt-3 flex flex-col gap-2">
-              {toPassOn.map((i) => (
-                <ActionCard
-                  key={i.id}
-                  person={i.requester}
-                  title={
-                    <>
-                      <b className="font-bold">{i.requester?.full_name}</b> wants you to introduce them to{" "}
-                      <b className="font-bold">{i.target?.full_name}</b>
-                    </>
-                  }
-                  detail={i.ask}
-                  href={`/app/intros/${i.id}`}
-                  cta="Review"
-                />
-              ))}
-              {forYou.map((i) => (
-                <ActionCard
-                  key={i.id}
-                  person={i.requester}
-                  title={
-                    <>
-                      <b className="font-bold">{i.broker?.full_name}</b> wants to introduce you to{" "}
-                      <b className="font-bold">{i.requester?.full_name}</b>
-                    </>
-                  }
-                  detail={i.ask}
-                  href={`/app/intros/${i.id}`}
-                  cta="Review"
-                />
-              ))}
-              {pendingList.slice(0, 3).map((p) => (
-                <ActionCard
-                  key={p.connection_id}
-                  person={null}
-                  title={
-                    <>
-                      Confirm how you know <b className="font-bold">{p.full_name}</b>
-                    </>
-                  }
-                  detail="They added you. Confirm to make the connection count."
-                  href="/app/connections/pending"
-                  cta="Confirm"
-                />
-              ))}
-              {pendingList.length > 3 && (
-                <li>
-                  <Link href="/app/connections/pending" className="block px-1 py-2 text-sm font-semibold text-link hover:underline">
-                    {pendingList.length - 3} more to confirm
-                  </Link>
-                </li>
-              )}
-              {pendingVouches.map((v) => (
-                <ActionCard
-                  key={v.id}
-                  person={{ id: v.author_id, full_name: v.author_name, avatar_url: v.author_avatar_url }}
-                  title={
-                    <>
-                      <b className="font-bold">{v.author_name}</b> wrote you a vouch
-                    </>
-                  }
-                  detail={v.body}
-                  href="/app/me?tab=vouches"
-                  cta="Review"
-                />
-              ))}
-              {contactRequests.map((c) => (
-                <li key={c.request_id}>
-                  <ContactRequestRow c={c} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Your network map */}
-        <Link
-          href="/app/explore?view=map"
-          className="bg-orb group mt-8 flex items-center gap-4 overflow-hidden rounded-card border border-border p-4 transition-colors hover:border-border-strong"
-        >
-          <MiniOrb />
-          <span className="min-w-0 flex-1">
-            <span className="block text-base font-bold text-ink">Your network map</span>
-            <span className="block text-sm text-muted">
-              See everyone you can reach, {profile.reach_score ?? 0} {profile.reach_score === 1 ? "person" : "people"} and counting.
-            </span>
-          </span>
-          <Icon name="chevronRight" className="h-5 w-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
-        </Link>
-
-        {/* Suggested for you */}
-        {suggested.length > 0 && (
-          <section className="mt-10">
-            <SectionHeader title="Suggested for you" href="/app/explore" linkLabel="See all" />
-            <ul className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-              {suggested.map((p) => (
-                <li key={p.id} className="w-44 shrink-0 snap-start">
-                  <SuggestedPersonCard person={p} />
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* What's new */}
-        <section className="mt-10">
-          <SectionHeader title="What's new" />
-          {activityList.length === 0 ? (
-            <p className="mt-3 text-sm text-muted">
-              Nothing yet. Connections and intros in your network show up here.
-            </p>
-          ) : (
-            <ul className="mt-1 flex flex-col">
-              {activityList.map((item, i) => (
-                <li key={i} className="flex items-center gap-3 py-3">
-                  {item.person_id ? (
-                    <Link href={`/app/u/${item.person_id}`}>
-                      <Avatar id={item.person_id} name={item.headline} src={item.avatar_url} size={40} />
+                      <span className="w-full truncate text-xs text-ink">{p.full_name.split(" ")[0]}</span>
                     </Link>
-                  ) : (
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-fill text-ink" role="img" aria-label="Two people">
-                      <Icon name="users" className="h-5 w-5" />
-                    </span>
-                  )}
-                  <p className="min-w-0 flex-1 text-sm text-body">
-                    {activityLabel(item)} <span className="text-muted">· {timeAgo(item.happened_at)}</span>
-                  </p>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
-        </section>
-      </div>
 
-      {/* ===== Right rail (wide screens), Instagram-web style ===== */}
-      <aside className="hidden w-[300px] shrink-0 pt-2 lg:block">
-        <Link href="/app/me" className="flex items-center gap-3">
-          <Avatar id={profile.id} name={profile.full_name} src={profile.avatar_url} size={48} />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-bold text-ink">{profile.full_name}</span>
-            <span className="block truncate text-sm text-muted">{profile.headline ?? "View your profile"}</span>
-          </span>
-        </Link>
-        <dl className="mt-5 grid grid-cols-3 gap-2 rounded-card border border-border bg-surface p-4 text-center">
-          <Stat label="Connections" value={s?.connections_count ?? 0} />
-          <Stat label="Reachable" value={profile.reach_score ?? 0} />
-          <Stat label="Open intros" value={s?.open_intros_count ?? 0} />
-        </dl>
-        <div className="mt-6 flex flex-col gap-2">
-          <Link href="/app/intros?tab=want" className={`${btnSecondarySmall} justify-start`}>
-            <Icon name="target" className="h-4 w-4" /> People I want to meet
+          <InstallPrompt />
+
+          {/* Needs you */}
+          <section className="mt-6">
+            <SectionHeader title="Needs you" count={needsYouCount} />
+            {needsYouCount === 0 ? (
+              <div className="mt-3 rounded-card border border-border bg-surface p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill">
+                    <Icon name="check" className="h-3.5 w-3.5" />
+                  </span>
+                  You&apos;re all caught up
+                </div>
+                <p className="mt-3 text-base font-bold text-ink">{step.headline}</p>
+                <p className="mt-0.5 text-sm text-muted">{step.detail}</p>
+                <Link href={step.href} className={`${btnPrimarySmall} mt-4`}>
+                  {step.cta}
+                </Link>
+              </div>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-2">
+                {toPassOn.map((i) => (
+                  <ActionCard
+                    key={i.id}
+                    person={i.requester}
+                    title={
+                      <>
+                        <b className="font-bold">{i.requester?.full_name}</b> wants you to introduce them to{" "}
+                        <b className="font-bold">{i.target?.full_name}</b>
+                      </>
+                    }
+                    detail={i.ask}
+                    href={`/app/intros/${i.id}`}
+                    cta="Review"
+                  />
+                ))}
+                {forYou.map((i) => (
+                  <ActionCard
+                    key={i.id}
+                    person={i.requester}
+                    title={
+                      <>
+                        <b className="font-bold">{i.broker?.full_name}</b> wants to introduce you to{" "}
+                        <b className="font-bold">{i.requester?.full_name}</b>
+                      </>
+                    }
+                    detail={i.ask}
+                    href={`/app/intros/${i.id}`}
+                    cta="Review"
+                  />
+                ))}
+                {pendingList.slice(0, 3).map((p) => (
+                  <ActionCard
+                    key={p.connection_id}
+                    person={null}
+                    title={
+                      <>
+                        Confirm how you know <b className="font-bold">{p.full_name}</b>
+                      </>
+                    }
+                    detail="They added you. Confirm to make the connection count."
+                    href="/app/connections/pending"
+                    cta="Confirm"
+                  />
+                ))}
+                {pendingList.length > 3 && (
+                  <li>
+                    <Link href="/app/connections/pending" className="block px-1 py-2 text-sm font-semibold text-link hover:underline">
+                      {pendingList.length - 3} more to confirm
+                    </Link>
+                  </li>
+                )}
+                {pendingVouches.map((v) => (
+                  <ActionCard
+                    key={v.id}
+                    person={{ id: v.author_id, full_name: v.author_name, avatar_url: v.author_avatar_url }}
+                    title={
+                      <>
+                        <b className="font-bold">{v.author_name}</b> wrote you a vouch
+                      </>
+                    }
+                    detail={v.body}
+                    href="/app/me?tab=vouches"
+                    cta="Review"
+                  />
+                ))}
+                {contactRequests.map((c) => (
+                  <li key={c.request_id}>
+                    <ContactRequestRow c={c} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Your network map */}
+          <Link
+            href="/app/explore?view=map"
+            className="bg-orb group mt-8 flex items-center gap-4 overflow-hidden rounded-card border border-border p-4 transition-colors hover:border-border-strong"
+          >
+            <MiniOrb />
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-bold text-ink">Your network map</span>
+              <span className="block text-sm text-muted">
+                See everyone you can reach, {profile.reach_score ?? 0} {profile.reach_score === 1 ? "person" : "people"} and counting.
+              </span>
+            </span>
+            <Icon name="chevronRight" className="h-5 w-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <Link href="/app/explore?view=map" className={`${btnSecondarySmall} justify-start`}>
-            <Icon name="map" className="h-4 w-4" /> Explore the map
-          </Link>
+
+          {/* Suggested for you */}
+          {suggested.length > 0 && (
+            <section className="mt-10">
+              <SectionHeader title="Suggested for you" href="/app/explore" linkLabel="See all" />
+              <ul className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+                {suggested.map((p) => (
+                  <li key={p.id} className="w-44 shrink-0 snap-start">
+                    <SuggestedPersonCard person={p} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* What's new */}
+          <section className="mt-10">
+            <SectionHeader title="What's new" />
+            {activityList.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">
+                Nothing yet. Connections and intros in your network show up here.
+              </p>
+            ) : (
+              <ul className="mt-1 flex flex-col">
+                {activityList.map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 py-3">
+                    {item.person_id ? (
+                      <Link href={`/app/u/${item.person_id}`}>
+                        <Avatar id={item.person_id} name={item.headline} src={item.avatar_url} size={40} />
+                      </Link>
+                    ) : (
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-fill text-ink" role="img" aria-label="Two people">
+                        <Icon name="users" className="h-5 w-5" />
+                      </span>
+                    )}
+                    <p className="min-w-0 flex-1 text-sm text-body">
+                      {activityLabel(item)} <span className="text-muted">· {timeAgo(item.happened_at)}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-        <p className="mt-8 text-xs text-muted">
-          <Link href="/terms" className="hover:underline">Terms</Link> ·{" "}
-          <Link href="/privacy" className="hover:underline">Privacy</Link> ·{" "}
-          <Link href="/acceptable-use" className="hover:underline">Acceptable use</Link>
-        </p>
-      </aside>
-    </div>
+
+        {/* ===== Right rail (wide screens), Instagram-web style ===== */}
+        <aside className="hidden w-[300px] shrink-0 pt-2 lg:block">
+          <Link href="/app/me" className="flex items-center gap-3">
+            <Avatar id={profile.id} name={profile.full_name} src={profile.avatar_url} size={48} />
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold text-ink">{profile.full_name}</span>
+              <span className="block truncate text-sm text-muted">{profile.headline ?? "View your profile"}</span>
+            </span>
+          </Link>
+          <dl className="mt-5 grid grid-cols-3 gap-2 rounded-card border border-border bg-surface p-4 text-center">
+            <Stat label="Connections" value={s?.connections_count ?? 0} />
+            <Stat label="Reachable" value={profile.reach_score ?? 0} />
+            <Stat label="Open intros" value={s?.open_intros_count ?? 0} />
+          </dl>
+          <div className="mt-6 flex flex-col gap-2">
+            <Link href="/app/intros?tab=want" className={`${btnSecondarySmall} justify-start`}>
+              <Icon name="target" className="h-4 w-4" /> People I want to meet
+            </Link>
+            <Link href="/app/explore?view=map" className={`${btnSecondarySmall} justify-start`}>
+              <Icon name="map" className="h-4 w-4" /> Explore the map
+            </Link>
+          </div>
+          <p className="mt-8 text-xs text-muted">
+            <Link href="/terms" className="hover:underline">Terms</Link> ·{" "}
+            <Link href="/privacy" className="hover:underline">Privacy</Link> ·{" "}
+            <Link href="/acceptable-use" className="hover:underline">Acceptable use</Link>
+          </p>
+        </aside>
+      </div>
+    </>
   );
 }
 

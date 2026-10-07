@@ -6,6 +6,7 @@ import { Avatar } from "@/app/components/avatar";
 import { Icon } from "@/app/components/icons";
 import { TargetRow } from "@/app/app/targets/target-row";
 import { AddTarget } from "@/app/app/targets/add-target";
+import { LoadError, loadErrors } from "@/app/components/load-error";
 
 // Intros: the whole journey to meeting someone, in one place.
 //   want  -- your private list of people you want to meet (was Targets)
@@ -70,6 +71,7 @@ const INTRO_COLS =
   "id, status, created_at, ask, requester:profiles!intro_requests_requester_id_fkey(id, full_name, avatar_url), broker:profiles!intro_requests_broker_id_fkey(id, full_name, avatar_url), target:profiles!intro_requests_target_id_fkey(id, full_name, avatar_url)";
 
 export default async function IntrosPage({ searchParams }: PageProps<"/app/intros">) {
+  const pageErrors: string[] = [];
   const { tab: rawTab, add: addId } = await searchParams;
   const tab = parseTab(rawTab);
 
@@ -84,137 +86,144 @@ export default async function IntrosPage({ searchParams }: PageProps<"/app/intro
   let prefill: { id: string; full_name: string } | null = null;
 
   if (tab === "want") {
-    const [{ data }, pre] = await Promise.all([
+    const loaded1 = await Promise.all([
       supabase.rpc("my_target_list"),
       typeof addId === "string" && addId && addId !== "1"
         ? supabase.from("profiles").select("id, full_name").eq("id", addId).is("deleted_at", null).maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
+    pageErrors.push(...loadErrors(...loaded1));
+    const [{ data }, pre] = loaded1;
     targets = (data ?? []) as Target[];
     prefill = pre.data;
   } else {
     const column = tab === "asked" ? "requester_id" : tab === "pass" ? "broker_id" : "target_id";
-    const { data } = await supabase
+    const loaded2 = await supabase
       .from("intro_requests")
       .select(INTRO_COLS)
       .eq(column, user.id)
       .order("created_at", { ascending: false });
+    pageErrors.push(...loadErrors(loaded2));
+    const { data } = loaded2;
     intros = (data ?? []) as unknown as IntroRow[];
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:py-10">
-      <h1 className="text-2xl font-extrabold tracking-tight text-ink">Intros</h1>
+    <>
+      <LoadError errors={pageErrors} className="mx-4 mt-4" />
+      <div className="mx-auto w-full max-w-2xl px-4 py-4 md:py-10">
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink">Intros</h1>
 
-      {/* Underline tabs, scrollable on narrow phones */}
-      <nav className="-mx-4 mt-4 flex overflow-x-auto border-b border-border px-4" aria-label="Intro sections">
-        {TABS.map((t) => (
-          <Link
-            key={t.key}
-            href={`/app/intros?tab=${t.key}`}
-            aria-current={tab === t.key ? "page" : undefined}
-            className={`-mb-px shrink-0 border-b-2 px-3 pb-3 pt-1 text-sm font-semibold transition-colors ${
-              tab === t.key ? "border-ink text-ink" : "border-transparent text-muted hover:text-body"
-            }`}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+        {/* Underline tabs, scrollable on narrow phones */}
+        <nav className="-mx-4 mt-4 flex overflow-x-auto border-b border-border px-4" aria-label="Intro sections">
+          {TABS.map((t) => (
+            <Link
+              key={t.key}
+              href={`/app/intros?tab=${t.key}`}
+              aria-current={tab === t.key ? "page" : undefined}
+              className={`-mb-px shrink-0 border-b-2 px-3 pb-3 pt-1 text-sm font-semibold transition-colors ${
+                tab === t.key ? "border-ink text-ink" : "border-transparent text-muted hover:text-body"
+              }`}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
 
-      {tab === "want" ? (
-        <>
-          <p className="mt-4 text-sm text-muted">
-            A private list of people you want to meet. Only you can see it. We&apos;ll look for a path to each one.
-          </p>
-          <div className="mt-4 rounded-card border border-border bg-surface p-4">
-            <AddTarget prefill={prefill} />
-          </div>
-          {targets.length === 0 ? (
+        {tab === "want" ? (
+          <>
+            <p className="mt-4 text-sm text-muted">
+              A private list of people you want to meet. Only you can see it. We&apos;ll look for a path to each one.
+            </p>
+            <div className="mt-4 rounded-card border border-border bg-surface p-4">
+              <AddTarget prefill={prefill} />
+            </div>
+            {targets.length === 0 ? (
+              <EmptyState
+                headline="No one on your list yet"
+                detail="Add someone you'd like to meet, from Explore or right here."
+                cta={{ label: "Explore people", href: "/app/explore" }}
+              />
+            ) : (
+              <ul className="mt-4 flex flex-col gap-3">
+                {targets.map((t) => (
+                  <TargetRow key={t.id} target={t} />
+                ))}
+              </ul>
+            )}
+          </>
+        ) : intros.length === 0 ? (
+          tab === "asked" ? (
             <EmptyState
-              headline="No one on your list yet"
-              detail="Add someone you'd like to meet, from Explore or right here."
+              headline="You haven't asked for an intro yet"
+              detail="Find someone you want to meet and we'll show you who can introduce you."
               cta={{ label: "Explore people", href: "/app/explore" }}
             />
+          ) : tab === "pass" ? (
+            <EmptyState
+              headline="No one's asked you to pass on an intro"
+              detail="When someone wants an intro to one of your connections, it shows up here."
+            />
           ) : (
-            <ul className="mt-4 flex flex-col gap-3">
-              {targets.map((t) => (
-                <TargetRow key={t.id} target={t} />
-              ))}
-            </ul>
-          )}
-        </>
-      ) : intros.length === 0 ? (
-        tab === "asked" ? (
-          <EmptyState
-            headline="You haven't asked for an intro yet"
-            detail="Find someone you want to meet and we'll show you who can introduce you."
-            cta={{ label: "Explore people", href: "/app/explore" }}
-          />
-        ) : tab === "pass" ? (
-          <EmptyState
-            headline="No one's asked you to pass on an intro"
-            detail="When someone wants an intro to one of your connections, it shows up here."
-          />
+            <EmptyState
+              headline="No intros to you yet"
+              detail="When someone asks a mutual connection to introduce you, it shows up here."
+            />
+          )
         ) : (
-          <EmptyState
-            headline="No intros to you yet"
-            detail="When someone asks a mutual connection to introduce you, it shows up here."
-          />
-        )
-      ) : (
-        <ul className="mt-2 flex flex-col">
-          {intros.map((intro) => {
-            const st = status(intro.status, tab === "asked");
-            // Lead with the person this row is really about.
-            const lead = tab === "asked" ? intro.target : intro.requester;
-            const line =
-              tab === "asked" ? (
-                <>
-                  <b className="font-semibold">{intro.target?.full_name}</b>
-                  <span className="text-muted"> via {intro.broker?.full_name}</span>
-                </>
-              ) : tab === "pass" ? (
-                <>
-                  <b className="font-semibold">{intro.requester?.full_name}</b>
-                  <span className="text-muted"> → {intro.target?.full_name}</span>
-                </>
-              ) : (
-                <>
-                  <b className="font-semibold">{intro.requester?.full_name}</b>
-                  <span className="text-muted"> via {intro.broker?.full_name}</span>
-                </>
+          <ul className="mt-2 flex flex-col">
+            {intros.map((intro) => {
+              const st = status(intro.status, tab === "asked");
+              // Lead with the person this row is really about.
+              const lead = tab === "asked" ? intro.target : intro.requester;
+              const line =
+                tab === "asked" ? (
+                  <>
+                    <b className="font-semibold">{intro.target?.full_name}</b>
+                    <span className="text-muted"> via {intro.broker?.full_name}</span>
+                  </>
+                ) : tab === "pass" ? (
+                  <>
+                    <b className="font-semibold">{intro.requester?.full_name}</b>
+                    <span className="text-muted"> → {intro.target?.full_name}</span>
+                  </>
+                ) : (
+                  <>
+                    <b className="font-semibold">{intro.requester?.full_name}</b>
+                    <span className="text-muted"> via {intro.broker?.full_name}</span>
+                  </>
+                );
+              return (
+                <li key={intro.id}>
+                  <Link
+                    href={`/app/intros/${intro.id}`}
+                    className="-mx-2 flex items-center gap-3 rounded-input px-2 py-3 hover:bg-fill"
+                  >
+                    {lead ? (
+                      <Avatar id={lead.id} name={lead.full_name} src={lead.avatar_url} size={48} />
+                    ) : (
+                      <span className="h-12 w-12 rounded-full bg-fill" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-ink">{line}</p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-xs">
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            st.tone === "good" ? "bg-success" : st.tone === "wait" ? "bg-link" : "bg-border-strong"
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <span className={st.tone === "good" ? "text-success" : "text-muted"}>{st.label}</span>
+                      </p>
+                    </div>
+                    <Icon name="chevronRight" className="h-4 w-4 text-muted" />
+                  </Link>
+                </li>
               );
-            return (
-              <li key={intro.id}>
-                <Link
-                  href={`/app/intros/${intro.id}`}
-                  className="-mx-2 flex items-center gap-3 rounded-input px-2 py-3 hover:bg-fill"
-                >
-                  {lead ? (
-                    <Avatar id={lead.id} name={lead.full_name} src={lead.avatar_url} size={48} />
-                  ) : (
-                    <span className="h-12 w-12 rounded-full bg-fill" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-ink">{line}</p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-xs">
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          st.tone === "good" ? "bg-success" : st.tone === "wait" ? "bg-link" : "bg-border-strong"
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span className={st.tone === "good" ? "text-success" : "text-muted"}>{st.label}</span>
-                    </p>
-                  </div>
-                  <Icon name="chevronRight" className="h-4 w-4 text-muted" />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+            })}
+          </ul>
+        )}
+      </div>
+    </>
   );
 }

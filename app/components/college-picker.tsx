@@ -28,6 +28,7 @@ export function CollegePicker({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [picked, setPicked] = useState<{ id: string | null; name: string } | null>(defaultValue ?? null);
   const [manual, setManual] = useState(!!defaultValue && !defaultValue.id);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -38,8 +39,9 @@ export function CollegePicker({
     let cancelled = false;
     const t = setTimeout(async () => {
       setLoading(true);
-      const { data } = await createClient().rpc("search_colleges", { q });
+      const { data, error } = await createClient().rpc("search_colleges", { q });
       if (!cancelled) {
+        setFailed(!!error);
         setResults((data ?? []) as College[]);
         setActive(0);
         setOpen(true);
@@ -143,7 +145,9 @@ export function CollegePicker({
               role="listbox"
               className="absolute inset-x-0 top-[calc(100%+6px)] z-20 max-h-72 overflow-y-auto rounded-input border border-border bg-surface p-1 shadow-elevated"
             >
-              {results.length === 0 && !loading ? (
+              {failed ? (
+                <li className="px-3 py-2.5 text-sm text-danger">Couldn&apos;t load schools. Try again, or type it below.</li>
+              ) : results.length === 0 && !loading ? (
                 <li className="px-3 py-2.5 text-sm text-muted">No matches.</li>
               ) : (
                 results.map((c, i) => (
