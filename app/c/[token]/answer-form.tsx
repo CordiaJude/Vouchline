@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState, type FormEvent } from "react";
 import { btnPrimary } from "@/app/components/ui/styles";
 import { redeemToken, type RedeemState } from "./actions";
 import { CategoryMultiSelect } from "@/app/components/category-multi-select";
@@ -30,8 +30,16 @@ export function AnswerForm({
     initialState,
   );
 
+  // Submit through onSubmit (not action=) so React doesn't clear the form
+  // when the request fails -- the person keeps their answers and can retry.
+  function keepValuesSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    startTransition(() => formAction(data));
+  }
+
   return (
-    <form action={formAction} className="mt-6 flex flex-col gap-6">
+    <form onSubmit={keepValuesSubmit} className="mt-6 flex flex-col gap-6">
       <CategoryMultiSelect legendText={`How do you know ${name}?`} />
 
       <div className="flex flex-col gap-1">

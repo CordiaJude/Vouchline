@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState, type FormEvent } from "react";
 import { input, btnPrimary } from "@/app/components/ui/styles";
 import { CategoryMultiSelect } from "@/app/components/category-multi-select";
 import { VisibilityChoice } from "@/app/components/visibility-choice";
@@ -30,6 +30,14 @@ export function RequestConnectionForm({
     initialState,
   );
 
+  // Submit through onSubmit (not action=) so React doesn't clear the form
+  // when the request fails -- the person keeps their answers and can retry.
+  function keepValuesSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    startTransition(() => formAction(data));
+  }
+
   if (state.success) {
     return (
       <p className="rounded-card bg-fill p-4 text-sm text-body">
@@ -40,7 +48,7 @@ export function RequestConnectionForm({
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form onSubmit={keepValuesSubmit} className="flex flex-col gap-4">
       <CategoryMultiSelect legendText={`How do you know ${personName}?`} />
 
       <div className="flex flex-col gap-1">

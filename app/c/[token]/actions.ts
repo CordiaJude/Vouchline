@@ -25,7 +25,8 @@ function friendlyRedeemError(message: string): string {
   if (message.includes("invalid_categories") || message.includes("exactly_one_primary_required")) {
     return "Please choose at least one category and mark exactly one as primary.";
   }
-  return "Something went wrong. Please try again.";
+  console.error("[connect] unexpected error", message);
+  return `Something went wrong (${message.slice(0, 80)}). Please try again.`;
 }
 
 export async function redeemToken(

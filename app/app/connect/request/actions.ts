@@ -19,7 +19,11 @@ function friendlyError(message: string): string {
   if (message.includes("invalid_categories") || message.includes("exactly_one_primary_required")) {
     return "Please choose at least one category and mark exactly one as primary.";
   }
-  return "Something went wrong. Please try again.";
+  if (message.includes("not_authenticated")) {
+    return "Your session expired. Log in again and retry.";
+  }
+  console.error("[connect] unexpected error", message);
+  return `Something went wrong (${message.slice(0, 80)}). Please try again.`;
 }
 
 export async function requestConnectionAction(
@@ -62,6 +66,10 @@ export async function requestConnectionAction(
     p_strength: Number(strength),
   });
 
+  if (error?.message.includes("already_answered")) {
+    // They already sent this request (or are already connected).
+    return { success: true };
+  }
   if (error) {
     return { error: friendlyError(error.message) };
   }

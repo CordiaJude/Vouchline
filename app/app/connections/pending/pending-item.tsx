@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState, type FormEvent } from "react";
 import { answerPending, declinePending, type AnswerState } from "./actions";
 import { CategoryMultiSelect } from "@/app/components/category-multi-select";
 import { VisibilityChoice } from "@/app/components/visibility-choice";
@@ -30,13 +30,21 @@ export function PendingItem({
     initialState,
   );
 
+  // Submit through onSubmit (not action=) so React doesn't clear the form
+  // when the request fails -- the person keeps their answers and can retry.
+  function keepValuesSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    startTransition(() => formAction(data));
+  }
+
   return (
     <div className="rounded-card border border-border bg-surface p-5 shadow-card">
       <p className="text-base font-bold text-ink">
         {name}
       </p>
 
-      <form action={formAction} className="mt-4 flex flex-col gap-4">
+      <form onSubmit={keepValuesSubmit} className="mt-4 flex flex-col gap-4">
         <CategoryMultiSelect legendText={`How do you know ${name}?`} />
 
         <div className="flex gap-3">
