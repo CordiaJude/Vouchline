@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppNav } from "@/app/components/app-nav";
@@ -33,6 +34,13 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
     supabase.rpc("am_platform_admin"),
   ]);
 
+  // Signed in but never finished onboarding: there's no profile yet, and
+  // nothing in the app works without one (connecting, intros, messages).
+  if (!me) {
+    const here = (await headers()).get("x-pathname") ?? "/app";
+    redirect(`/onboarding?next=${encodeURIComponent(here)}`);
+  }
+
   return (
     <div className="min-h-screen">
       <AppNav
@@ -40,7 +48,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
         unreadNotifications={unreadCount ?? 0}
         unreadMessages={unreadMessages ?? 0}
         isModerator={isModerator === true}
-        me={{ id: user.id, name: me?.full_name ?? "You", avatarUrl: me?.avatar_url ?? null }}
+        me={{ id: user.id, name: me.full_name, avatarUrl: me.avatar_url }}
       />
       {/* Phones: h-14 top bar + bottom tab bar. Desktop: left rail,
           72px (md/lg) or 244px (xl). */}

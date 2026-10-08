@@ -28,6 +28,8 @@ export async function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
+  // Lets layouts send someone back where they were (e.g. after onboarding).
+  requestHeaders.set("x-pathname", request.nextUrl.pathname + request.nextUrl.search);
   requestHeaders.set("Content-Security-Policy", cspHeader);
 
   const response = await updateSession(request, requestHeaders);

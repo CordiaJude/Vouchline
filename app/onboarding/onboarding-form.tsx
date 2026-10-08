@@ -50,11 +50,13 @@ const FIELD_STEP: Record<string, number> = {
 export function OnboardingForm({
   userId,
   inviteToken,
+  returnTo,
   defaultFullName,
   defaultAvatarUrl = null,
 }: {
   userId: string;
   inviteToken?: string;
+  returnTo?: string;
   defaultFullName?: string;
   defaultAvatarUrl?: string | null;
 }) {
@@ -153,6 +155,7 @@ export function OnboardingForm({
       }}
     >
       {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
+      {returnTo && <input type="hidden" name="next" value={returnTo} />}
       {avatarUrl && <input type="hidden" name="avatar_url" value={avatarUrl} />}
       {status && <input type="hidden" name="status" value={status} />}
 

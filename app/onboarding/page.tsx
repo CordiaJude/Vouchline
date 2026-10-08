@@ -3,11 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { OnboardingForm } from "./onboarding-form";
 import { Logo } from "@/app/components/logo";
 import { authCard } from "@/app/components/ui/styles";
+import { safeNext } from "@/lib/safe-next";
 
 export default async function OnboardingPage({
   searchParams,
 }: PageProps<"/onboarding">) {
-  const { invite } = await searchParams;
+  const { invite, next: nextParam } = await searchParams;
+  const next = safeNext(nextParam);
   const inviteToken = typeof invite === "string" ? invite : undefined;
 
   const supabase = await createClient();
@@ -26,7 +28,7 @@ export default async function OnboardingPage({
     .maybeSingle();
 
   if (existingProfile) {
-    redirect(inviteToken ? `/invite/${inviteToken}` : "/app");
+    redirect(inviteToken ? `/invite/${inviteToken}` : (next ?? "/app"));
   }
 
   // No org-membership gate on signup -- orgs are only for rosters,
@@ -78,6 +80,7 @@ export default async function OnboardingPage({
         <OnboardingForm
           userId={user.id}
           inviteToken={invitePreview ? inviteToken : undefined}
+          returnTo={next}
           defaultFullName={
             typeof user.user_metadata?.full_name === "string"
               ? user.user_metadata.full_name

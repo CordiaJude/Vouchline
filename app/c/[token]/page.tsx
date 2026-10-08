@@ -16,6 +16,12 @@ export default async function ConnectTokenPage({
     redirect(`/login?redirect_to=${encodeURIComponent(`/c/${token}`)}`);
   }
 
+  // Must have a profile before connecting (it's what the connection points to).
+  const { data: myProfile } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
+  if (!myProfile) {
+    redirect(`/onboarding?next=${encodeURIComponent(`/c/${token}`)}`);
+  }
+
   const result = await supabase
     .rpc("connect_token_preview", { p_token: token })
     .maybeSingle();

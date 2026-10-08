@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/server";
 import { parseOnboardingFormData } from "@/lib/profile-schema";
 import { cleanInterests, cleanGoals } from "@/lib/interests";
@@ -96,6 +97,8 @@ export async function createProfile(
     }
   }
 
-  // New accounts land on interest-based suggestions before the app.
-  redirect("/onboarding/people");
+  // Came here from a link (someone's QR code or profile)? Go straight back
+  // to it. Otherwise new accounts land on interest-based suggestions.
+  const next = safeNext(formData.get("next"));
+  redirect(next ?? "/onboarding/people");
 }
