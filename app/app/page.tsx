@@ -390,10 +390,9 @@ function MiniOrb({ small = false }: { small?: boolean }) {
     <svg viewBox="0 0 88 88" className={small ? "h-7 w-7" : "h-[72px] w-[72px] shrink-0"} aria-hidden="true">
       <defs>
         <linearGradient id="mini-ig" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0%" stopColor="#feda75" />
-          <stop offset="35%" stopColor="#fa7e1e" />
-          <stop offset="60%" stopColor="#d62976" />
-          <stop offset="100%" stopColor="#4f5bd5" />
+          <stop offset="0%" className="g-stop-1" />
+          <stop offset="50%" className="g-stop-2" />
+          <stop offset="100%" className="g-stop-3" />
         </linearGradient>
       </defs>
       <circle cx="44" cy="44" r="22" fill="none" stroke="#fff" strokeOpacity="0.1" />

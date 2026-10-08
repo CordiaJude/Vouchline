@@ -16,7 +16,7 @@ export function brandIcon(size: number, { bleed = false }: { bleed?: boolean } =
           alignItems: "center",
           justifyContent: "center",
           borderRadius: radius,
-          background: "linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%)",
+          background: "linear-gradient(45deg, #f6d88b 0%, #eebb62 50%, #e8a44a 100%)",
         }}
       >
         <svg width={mark} height={mark} viewBox="0 0 32 32" fill="none">

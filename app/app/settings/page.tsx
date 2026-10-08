@@ -10,13 +10,13 @@ import { DeleteAccount } from "./delete-account";
 import { BlockedList } from "./blocked-list";
 import { InterestsSettings } from "./interests-settings";
 import { VerifyEmailCard } from "./verify-email-card";
-import { AppearanceSettings } from "./appearance-settings";
+import { AppearanceSettings, PaletteSettings } from "./appearance-settings";
 import { PushSettings } from "./push-settings";
 import { ResumeImport } from "./resume-import";
 import { ExperienceEditor, SkillsEditor } from "./experience-editor";
 import type { Experience } from "@/app/components/experience-list";
 import { cookies } from "next/headers";
-import { THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
+import { THEME_COOKIE, parseTheme, PALETTE_COOKIE, parsePalette } from "@/lib/ui-cookies";
 import { heading1, btnSecondarySmall } from "@/app/components/ui/styles";
 import { signOut } from "@/app/app/actions";
 import { LoadError, loadErrors } from "@/app/components/load-error";
@@ -92,6 +92,8 @@ export default async function SettingsPage() {
 
           <SettingsSection title="Appearance">
             <AppearanceSettings current={parseTheme((await cookies()).get(THEME_COOKIE)?.value)} />
+            <p className="mb-2 mt-5 text-sm font-semibold text-ink">Color scheme</p>
+            <PaletteSettings current={parsePalette((await cookies()).get(PALETTE_COOKIE)?.value)} />
           </SettingsSection>
 
           <SettingsSection title="Verification">

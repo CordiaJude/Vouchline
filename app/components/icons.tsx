@@ -6,6 +6,7 @@ export type IconName =
   | "home"
   | "search"
   | "send"
+  | "intro"
   | "user"
   | "users"
   | "add"
@@ -40,6 +41,11 @@ const ICONS: Record<IconName, { d: string; fillable?: boolean }> = {
   home: { d: "M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z", fillable: true },
   search: { d: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35" },
   send: { d: "M22 3L9.2 10.1M22 3l-6.5 18-3.8-8.4L3 9.5 22 3z", fillable: true },
+  // Intros: you and someone new, linked through a mutual at the top.
+  intro: {
+    d: "M14.5 5.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM7.5 18.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM21.5 18.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM10.7 7.7l-4.4 8.4M13.3 7.7l4.4 8.4M8 18.5h8",
+    fillable: true,
+  },
   user: { d: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z", fillable: true },
   users: {
     d: "M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M10 11a4 4 0 100-8 4 4 0 000 8zM21 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",

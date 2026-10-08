@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { NoZoom } from "@/app/components/no-zoom";
 import { cookies } from "next/headers";
-import { THEME_COOKIE, parseTheme } from "@/lib/ui-cookies";
+import { THEME_COOKIE, parseTheme, PALETTE_COOKIE, parsePalette } from "@/lib/ui-cookies";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -50,6 +50,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-theme={parseTheme((await cookies()).get(THEME_COOKIE)?.value)}
+      data-palette={parsePalette((await cookies()).get(PALETTE_COOKIE)?.value)}
       className={`${jakarta.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body">

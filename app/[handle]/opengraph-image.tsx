@@ -29,7 +29,7 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
                 width: 52,
                 height: 52,
                 borderRadius: 16,
-                background: "linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)",
+                background: "linear-gradient(45deg, #f6d88b, #eebb62, #e8a44a)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -49,7 +49,7 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
                 height: 220,
                 borderRadius: 999,
                 padding: 7,
-                background: "linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)",
+                background: "linear-gradient(45deg, #f6d88b, #eebb62, #e8a44a)",
                 display: "flex",
               }}
             >

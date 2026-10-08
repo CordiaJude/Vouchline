@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { signOut } from "@/app/app/actions";
@@ -8,6 +8,24 @@ import { Avatar } from "@/app/components/avatar";
 import { Logo, LogoMark } from "@/app/components/logo";
 import { AddSheet } from "@/app/components/add-sheet";
 import { Icon, type IconName } from "@/app/components/icons";
+
+// True while a text field has focus on a touch screen (keyboard is up).
+// The bottom bar hides then, like native apps, instead of riding up on
+// top of the keyboard.
+function subscribeFocus(cb: () => void) {
+  document.addEventListener("focusin", cb);
+  document.addEventListener("focusout", cb);
+  return () => {
+    document.removeEventListener("focusin", cb);
+    document.removeEventListener("focusout", cb);
+  };
+}
+function typingOnTouch() {
+  const el = document.activeElement as HTMLElement | null;
+  if (!el || !window.matchMedia("(pointer: coarse)").matches) return false;
+  if (el.isContentEditable || el.tagName === "TEXTAREA" || el.tagName === "SELECT") return true;
+  return el.tagName === "INPUT" && !["checkbox", "radio", "button", "submit", "range", "file", "color"].includes((el as HTMLInputElement).type);
+}
 
 // Four places and one action, organized around what people come to do:
 //   Home    -- what needs you, then what's new
@@ -35,7 +53,7 @@ const EXPLORE: Tab = {
 const INTROS: Tab = {
   href: "/app/intros",
   label: "Intros",
-  icon: "send",
+  icon: "intro",
   match: (p) => p.startsWith("/app/intros") || p.startsWith("/app/targets"),
 };
 const YOU: Tab = {
@@ -91,6 +109,7 @@ export function AppNav({
     setMoreOpen(false);
   }
 
+  const typing = useSyncExternalStore(subscribeFocus, typingOnTouch, () => false);
   const badge = unreadNotifications > 9 ? "9+" : String(unreadNotifications);
   // Which bottom-bar slot the glass bubble sits under (-1: none, e.g. on Messages).
   const activeIndex = HOME.match(pathname)
@@ -146,7 +165,7 @@ export function AppNav({
           bubble's position is one of five translate classes. */}
       <nav
         aria-label="Main"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] md:hidden"
+        className={`pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] md:hidden ${typing ? "hidden" : ""}`}
       >
         <div className="glass-bar pointer-events-auto relative mx-auto flex h-[60px] max-w-md items-stretch rounded-full p-1.5">
           <span

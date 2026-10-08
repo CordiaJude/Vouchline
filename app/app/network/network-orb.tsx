@@ -140,18 +140,17 @@ export function NetworkOrb({
       .attr("y1", "100%")
       .attr("x2", "100%")
       .attr("y2", "0%");
+    // Colors come from the chosen color scheme (.g-stop-N in globals.css).
     [
-      ["0%", "#feda75"],
-      ["25%", "#fa7e1e"],
-      ["50%", "#d62976"],
-      ["75%", "#962fbf"],
-      ["100%", "#4f5bd5"],
-    ].forEach(([o, c]) => ig.append("stop").attr("offset", o).attr("stop-color", c));
+      ["0%", "g-stop-1"],
+      ["50%", "g-stop-2"],
+      ["100%", "g-stop-3"],
+    ].forEach(([o, c]) => ig.append("stop").attr("offset", o).attr("class", c));
 
     // Halo behind "you".
     const halo = defs.append("radialGradient").attr("id", "orb-halo");
     halo.append("stop").attr("offset", "0%").attr("stop-color", "#ffffff").attr("stop-opacity", 0.22);
-    halo.append("stop").attr("offset", "45%").attr("stop-color", "#d62976").attr("stop-opacity", 0.12);
+    halo.append("stop").attr("offset", "45%").attr("class", "g-stop-2").attr("stop-opacity", 0.12);
     halo.append("stop").attr("offset", "100%").attr("stop-color", "#000000").attr("stop-opacity", 0);
 
     // Soft glow for direct connections' lines.

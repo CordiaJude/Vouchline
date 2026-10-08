@@ -1,11 +1,9 @@
 @import "tailwindcss";
 
-/* Vouchline design tokens. Dark-first, in the spirit of Instagram's
-   dark mode: true black page, near-black cards, hairline gray borders,
-   white type. There is no single "brand color" on controls -- primary
-   actions are white-on-black, links and active states use Instagram
-   blue, and the multi-stop Instagram-style gradient appears only where
-   Instagram itself uses it: story rings around avatars and the logo.
+/* Vouchline design tokens. Dark-first: near-black page, slightly lighter
+   cards, hairline borders, white type. Primary actions are white-on-black;
+   the color scheme (see "Color schemes" below) supplies the gradient used
+   on story rings, the logo and the map, plus links and chat bubbles.
 
    Dark is the default. Settings -> Appearance sets data-theme on <html>
    to "dark", "light" or "system" (follow the device). */
@@ -50,7 +48,11 @@
   --danger: #ff6b6b;
   --success: #4ade80;
 
-  --brand-gradient: linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+  /* Fallback gradient; each color scheme below overrides it. */
+  --g1: #f6d88b;
+  --g2: #eebb62;
+  --g3: #e8a44a;
+  --brand-gradient: linear-gradient(45deg, var(--g1) 0%, var(--g2) 50%, var(--g3) 100%);
 
   --radius-pill: 999px;
   --radius-card: 16px;
@@ -130,6 +132,199 @@
   }
 }
 
+
+/* ===== Color schemes (Settings -> Appearance) =====
+   data-palette on <html>. Each sets the gradient (story rings, logo, map),
+   chat bubbles and links; in dark mode it also tints the background.
+   Default is "midnight". */
+:root[data-palette="midnight"] {
+  --g1: #f6d88b;
+  --g2: #eebb62;
+  --g3: #e8a44a;
+  --brand-gradient: linear-gradient(45deg, #f6d88b 0%, #eebb62 50%, #e8a44a 100%);
+  --bubble: #2b4c7e;
+}
+:root[data-palette="midnight"][data-theme="dark"] {
+  --page-bg: #0b0f17;
+  --surface: #141a24;
+  --fill: #1b2230;
+  --border: #252d3b;
+  --avatar-bg: #232b39;
+  --link: #7fb2ff;
+  --link-hover: #a9cbff;
+  --glass-bg: rgba(20, 26, 36, 0.55);
+  --glass-top: rgba(11, 15, 23, 0.6);
+}
+:root[data-palette="midnight"][data-theme="light"] {
+  --link: #1f5fbf;
+  --link-hover: #123d7d;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="midnight"][data-theme="system"] {
+    --page-bg: #0b0f17;
+    --surface: #141a24;
+    --fill: #1b2230;
+    --border: #252d3b;
+    --avatar-bg: #232b39;
+    --link: #7fb2ff;
+    --link-hover: #a9cbff;
+    --glass-bg: rgba(20, 26, 36, 0.55);
+    --glass-top: rgba(11, 15, 23, 0.6);
+  }
+}
+@media (prefers-color-scheme: light) {
+  :root[data-palette="midnight"][data-theme="system"] {
+    --link: #1f5fbf;
+    --link-hover: #123d7d;
+  }
+}
+:root[data-palette="ember"] {
+  --g1: #ff5f6d;
+  --g2: #ff8f6b;
+  --g3: #ffc371;
+  --brand-gradient: linear-gradient(45deg, #ff5f6d 0%, #ff8f6b 50%, #ffc371 100%);
+  --bubble: #c2462f;
+}
+:root[data-palette="ember"][data-theme="dark"] {
+  --page-bg: #0a0a0a;
+  --surface: #151312;
+  --fill: #1e1a18;
+  --border: #2a2522;
+  --avatar-bg: #26201d;
+  --link: #ff9b7a;
+  --link-hover: #ffbfa6;
+  --glass-bg: rgba(21, 19, 18, 0.55);
+  --glass-top: rgba(10, 10, 10, 0.6);
+}
+:root[data-palette="ember"][data-theme="light"] {
+  --link: #b8402a;
+  --link-hover: #7a2a1b;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="ember"][data-theme="system"] {
+    --page-bg: #0a0a0a;
+    --surface: #151312;
+    --fill: #1e1a18;
+    --border: #2a2522;
+    --avatar-bg: #26201d;
+    --link: #ff9b7a;
+    --link-hover: #ffbfa6;
+    --glass-bg: rgba(21, 19, 18, 0.55);
+    --glass-top: rgba(10, 10, 10, 0.6);
+  }
+}
+@media (prefers-color-scheme: light) {
+  :root[data-palette="ember"][data-theme="system"] {
+    --link: #b8402a;
+    --link-hover: #7a2a1b;
+  }
+}
+:root[data-palette="ocean"] {
+  --g1: #3a6ff7;
+  --g2: #4a9cfb;
+  --g3: #5cc8ff;
+  --brand-gradient: linear-gradient(45deg, #3a6ff7 0%, #4a9cfb 50%, #5cc8ff 100%);
+  --bubble: #2457d6;
+}
+:root[data-palette="ocean"][data-theme="dark"] {
+  --page-bg: #070b14;
+  --surface: #0f1626;
+  --fill: #152036;
+  --border: #1f2b45;
+  --avatar-bg: #1a2438;
+  --link: #6ea8ff;
+  --link-hover: #a3c8ff;
+  --glass-bg: rgba(15, 22, 38, 0.55);
+  --glass-top: rgba(7, 11, 20, 0.6);
+}
+:root[data-palette="ocean"][data-theme="light"] {
+  --link: #1f5fd6;
+  --link-hover: #123c8c;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="ocean"][data-theme="system"] {
+    --page-bg: #070b14;
+    --surface: #0f1626;
+    --fill: #152036;
+    --border: #1f2b45;
+    --avatar-bg: #1a2438;
+    --link: #6ea8ff;
+    --link-hover: #a3c8ff;
+    --glass-bg: rgba(15, 22, 38, 0.55);
+    --glass-top: rgba(7, 11, 20, 0.6);
+  }
+}
+@media (prefers-color-scheme: light) {
+  :root[data-palette="ocean"][data-theme="system"] {
+    --link: #1f5fd6;
+    --link-hover: #123c8c;
+  }
+}
+:root[data-palette="coral"] {
+  --g1: #ff6b6b;
+  --g2: #ffa38f;
+  --g3: #4facfe;
+  --brand-gradient: linear-gradient(45deg, #ff6b6b 0%, #ffa38f 50%, #4facfe 100%);
+  --bubble: #2f6fd6;
+}
+:root[data-palette="coral"][data-theme="dark"] {
+  --page-bg: #0a0b0f;
+  --surface: #14161d;
+  --fill: #1b1e27;
+  --border: #262a35;
+  --avatar-bg: #22252f;
+  --link: #4facfe;
+  --link-hover: #8ccbff;
+  --glass-bg: rgba(20, 22, 29, 0.55);
+  --glass-top: rgba(10, 11, 15, 0.6);
+}
+:root[data-palette="coral"][data-theme="light"] {
+  --link: #0b6bc2;
+  --link-hover: #074a86;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="coral"][data-theme="system"] {
+    --page-bg: #0a0b0f;
+    --surface: #14161d;
+    --fill: #1b1e27;
+    --border: #262a35;
+    --avatar-bg: #22252f;
+    --link: #4facfe;
+    --link-hover: #8ccbff;
+    --glass-bg: rgba(20, 22, 29, 0.55);
+    --glass-top: rgba(10, 11, 15, 0.6);
+  }
+}
+@media (prefers-color-scheme: light) {
+  :root[data-palette="coral"][data-theme="system"] {
+    --link: #0b6bc2;
+    --link-hover: #074a86;
+  }
+}
+/* Settings swatches (fixed colors, independent of the active scheme). */
+.swatch-midnight {
+  background: linear-gradient(45deg, #141a24 0%, #141a24 35%, #f6d88b 36%, #e8a44a 100%);
+}
+.swatch-ember {
+  background: linear-gradient(45deg, #151312 0%, #151312 35%, #ff5f6d 36%, #ffc371 100%);
+}
+.swatch-ocean {
+  background: linear-gradient(45deg, #0f1626 0%, #0f1626 35%, #3a6ff7 36%, #5cc8ff 100%);
+}
+.swatch-coral {
+  background: linear-gradient(45deg, #14161d 0%, #14161d 35%, #ff6b6b 36%, #4facfe 100%);
+}
+/* Gradient stops for inline SVG (map, mini map). */
+.g-stop-1 {
+  stop-color: var(--g1);
+}
+.g-stop-2 {
+  stop-color: var(--g2);
+}
+.g-stop-3 {
+  stop-color: var(--g3);
+}
+
 @theme inline {
   --color-ink: var(--ink);
   --color-body: var(--body-text);
@@ -172,6 +367,7 @@
 }
 
 body {
+  overscroll-behavior: none;
   background: var(--page-bg);
   color: var(--page-fg);
   font-family: var(--font-body);
@@ -234,6 +430,9 @@ body {
 /* ===== Motion: fast and smooth ===== */
 html {
   -webkit-tap-highlight-color: transparent;
+  /* No rubber-band bounce: on iPhone it drags the fixed top and bottom
+     bars along with the page. */
+  overscroll-behavior: none;
   /* No double-tap zoom; taps also fire instantly. */
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
