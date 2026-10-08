@@ -2,15 +2,8 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isStandalone, pushSupported, subscribeToPush } from "@/lib/push-client";
 import { btnPrimarySmall, btnSecondarySmall } from "@/app/components/ui/styles";
-
-const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-
-function urlBase64ToUint8Array(base64: string) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
 
 type Support = "unknown" | "unsupported" | "ios-install" | "ok";
 
@@ -19,13 +12,9 @@ export function PushSettings({ userId }: { userId: string }) {
   const support = useSyncExternalStore<Support>(
     () => () => {},
     () => {
-      const hasApis = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
       const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
-      const standalone =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        (navigator as Navigator & { standalone?: boolean }).standalone === true;
-      if (ios && !standalone) return "ios-install";
-      return hasApis ? "ok" : "unsupported";
+      if (ios && !isStandalone()) return "ios-install";
+      return pushSupported() ? "ok" : "unsupported";
     },
     () => "unknown",
   );
@@ -54,29 +43,16 @@ export function PushSettings({ userId }: { userId: string }) {
     setBusy(true);
     setError(null);
     try {
-      if (!VAPID) throw new Error("not_configured");
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setError("Notifications are blocked. Allow them for this site in your browser or phone settings.");
-        return;
-      }
-      const reg = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID) });
-      const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
-      const { error: err } = await createClient()
-        .from("push_subscriptions")
-        .upsert(
-          { user_id: userId, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth, user_agent: navigator.userAgent.slice(0, 300) },
-          { onConflict: "endpoint" },
-        );
-      if (err) throw err;
+      await subscribeToPush(userId);
       setEnabled(true);
     } catch (e) {
+      const reason = (e as Error).message;
       setError(
-        (e as Error).message === "not_configured"
+        reason === "not_configured"
           ? "Notifications aren't set up on this site yet."
-          : "Couldn't turn on notifications. Try again.",
+          : reason === "denied"
+            ? "Notifications are blocked. Allow them for this site in your browser or phone settings."
+            : "Couldn't turn on notifications. Try again.",
       );
     } finally {
       setBusy(false);

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppNav } from "@/app/components/app-nav";
+import { NotificationPrompt } from "@/app/components/notification-prompt";
 
 export default async function AppLayout({ children }: LayoutProps<"/app">) {
   const supabase = await createClient();
@@ -43,6 +44,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
 
   return (
     <div className="min-h-screen">
+      <NotificationPrompt userId={user.id} />
       <AppNav
         adminOrgId={adminOrg?.org_id ?? null}
         unreadNotifications={unreadCount ?? 0}
