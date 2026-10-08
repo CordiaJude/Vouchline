@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/app/components/avatar";
 import { Icon } from "@/app/components/icons";
 import { btnPrimary, btnPrimarySmall, btnSecondary, btnSecondarySmall, input } from "@/app/components/ui/styles";
+import { extractEmails, extractPhones, normalizePhone, sha256 } from "@/lib/contacts";
 
 type Match = {
   id: string;
@@ -19,22 +20,13 @@ type Match = {
 
 // Contact Picker API (Android Chrome); not in TypeScript's DOM lib yet.
 type ContactsManager = {
-  select: (props: string[], opts: { multiple: boolean }) => Promise<{ email?: string[] }[]>;
+  select: (props: string[], opts: { multiple: boolean }) => Promise<{ email?: string[]; tel?: string[] }[]>;
 };
 
-const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+type Found = { emails: string[]; phones: string[] };
 
-function extractEmails(text: string): string[] {
-  return [...new Set((text.match(EMAIL_RE) ?? []).map((e) => e.toLowerCase()))];
-}
-
-// Hash on the device: only SHA-256 hashes ever leave the browser.
-async function sha256(s: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-export function FindFriends() {
+// `onboarding`: shown as a signup step, with a Continue/Skip link.
+export function FindFriends({ continueHref }: { continueHref?: string } = {}) {
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [checked, setChecked] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -49,33 +41,43 @@ export function FindFriends() {
   );
   const contacts = hasPicker ? (navigator as Navigator & { contacts?: ContactsManager }).contacts : undefined;
 
-  async function lookup(emails: string[]) {
+  async function lookup({ emails, phones }: Found) {
     setError(null);
-    if (emails.length === 0) {
-      setError("We couldn't find any email addresses there.");
+    if (emails.length === 0 && phones.length === 0) {
+      setError("We couldn't find any phone numbers or email addresses there.");
       return;
     }
     setBusy(true);
-    const unique = emails.slice(0, 2000);
-    const hashes = await Promise.all(unique.map(sha256));
-    const { data, error: err } = await createClient().rpc("find_people_by_email_hashes", { p_hashes: hashes });
+    const e = emails.slice(0, 3000);
+    const p = phones.slice(0, 3000);
+    const [emailHashes, phoneHashes] = await Promise.all([Promise.all(e.map(sha256)), Promise.all(p.map(sha256))]);
+    const { data, error: err } = await createClient().rpc("find_people_by_contact_hashes", {
+      p_email_hashes: emailHashes,
+      p_phone_hashes: phoneHashes,
+    });
     setBusy(false);
     if (err) {
       setError(err.message.includes("rate_limited") ? "You've searched a lot this hour. Try again later." : "Something went wrong. Try again.");
       return;
     }
-    setChecked(unique.length);
+    setChecked(new Set([...e, ...p]).size);
     setMatches((data ?? []) as Match[]);
   }
 
   async function pickContacts() {
     try {
-      const picked = await contacts!.select(["email"], { multiple: true });
-      await lookup([...new Set(picked.flatMap((c) => c.email ?? []).map((e) => e.toLowerCase()))]);
+      const props = ["email", "tel"];
+      const picked = await contacts!.select(props, { multiple: true });
+      await lookup({
+        emails: [...new Set(picked.flatMap((c) => c.email ?? []).map((x) => x.toLowerCase()))],
+        phones: [...new Set(picked.flatMap((c) => c.tel ?? []).map(normalizePhone).filter((x): x is string => !!x))],
+      });
     } catch {
       // Picker dismissed.
     }
   }
+
+  const fromText = (text: string): Found => ({ emails: extractEmails(text), phones: extractPhones(text) });
 
   async function invite() {
     const url = `${window.location.origin}/signup`;
@@ -96,7 +98,7 @@ export function FindFriends() {
     return (
       <div className="mt-6">
         <p className="text-sm text-muted">
-          Checked {checked} {checked === 1 ? "email" : "emails"}.{" "}
+          Checked {checked} {checked === 1 ? "contact" : "contacts"}.{" "}
           {matches.length === 0
             ? "None of them are on Vouchline yet."
             : `${matches.length} ${matches.length === 1 ? "is" : "are"} on Vouchline.`}
@@ -129,9 +131,15 @@ export function FindFriends() {
           <button type="button" onClick={invite} className={btnPrimary}>
             {copied ? "Invite link copied" : "Invite friends who aren't here"}
           </button>
-          <button type="button" onClick={() => setMatches(null)} className={btnSecondary}>
-            Check more contacts
-          </button>
+          {continueHref ? (
+            <Link href={continueHref} className={btnSecondary}>
+              Continue
+            </Link>
+          ) : (
+            <button type="button" onClick={() => setMatches(null)} className={btnSecondary}>
+              Check more contacts
+            </button>
+          )}
         </div>
       </div>
     );
@@ -141,14 +149,15 @@ export function FindFriends() {
     <div className="mt-6 flex flex-col gap-4">
       {contacts && (
         <button type="button" onClick={pickContacts} disabled={busy} className={`${btnPrimary} w-full`}>
-          <Icon name="users" className="h-5 w-5" /> Choose from my contacts
+          <Icon name="users" className="h-5 w-5" /> {busy ? "Checking…" : "Choose contacts"}
         </button>
       )}
 
       <div className="rounded-card border border-border bg-surface p-4">
-        <p className="text-sm font-semibold text-ink">Upload your contacts</p>
+        <p className="text-sm font-semibold text-ink">{contacts ? "Or upload all your contacts" : "Upload all your contacts"}</p>
         <p className="mt-0.5 text-xs text-muted">
-          A .vcf or .csv file. On iPhone: Contacts → select all → Export. On Google: contacts.google.com → Export.
+          On iPhone: open Contacts → Lists → press and hold &ldquo;All Contacts&rdquo; → Export, save it, then choose
+          that file here. On Google: contacts.google.com → Export.
         </p>
         <label className={`${btnSecondarySmall} mt-3 cursor-pointer`}>
           {busy ? "Checking…" : "Choose file"}
@@ -165,7 +174,7 @@ export function FindFriends() {
                 setError("That file is too big. Try exporting just your contacts.");
                 return;
               }
-              await lookup(extractEmails(await file.text()));
+              await lookup(fromText(await file.text()));
             }}
           />
         </label>
@@ -173,20 +182,20 @@ export function FindFriends() {
 
       <div className="rounded-card border border-border bg-surface p-4">
         <label htmlFor="paste-emails" className="text-sm font-semibold text-ink">
-          Or paste email addresses
+          Or paste phone numbers or emails
         </label>
         <textarea
           id="paste-emails"
           rows={3}
           value={paste}
           onChange={(e) => setPaste(e.target.value)}
-          placeholder="maya@example.com, leo@example.com"
+          placeholder="(214) 555-0123, maya@example.com"
           className={`${input} mt-2`}
         />
         <button
           type="button"
           disabled={busy || !paste.trim()}
-          onClick={() => lookup(extractEmails(paste))}
+          onClick={() => lookup(fromText(paste))}
           className={`${btnSecondarySmall} mt-3`}
         >
           {busy ? "Checking…" : "Find them"}
@@ -197,9 +206,15 @@ export function FindFriends() {
 
       <p className="flex items-start gap-2 text-xs text-muted">
         <Icon name="shield" className="mt-0.5 h-4 w-4 shrink-0" />
-        Emails are scrambled on your device before anything is sent, and nothing you upload is saved. Only people who
+        Numbers and emails are scrambled on your device before anything is sent, and nothing you upload is saved. Only people who
         chose &ldquo;Let people find me&rdquo; can be found.
       </p>
+
+      {continueHref && (
+        <Link href={continueHref} className="self-center py-2 text-sm font-semibold text-muted hover:text-ink">
+          Skip for now
+        </Link>
+      )}
     </div>
   );
 }

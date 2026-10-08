@@ -11,6 +11,7 @@ import { BlockedList } from "./blocked-list";
 import { InterestsSettings } from "./interests-settings";
 import { VerifyEmailCard } from "./verify-email-card";
 import { AppearanceSettings, PaletteSettings } from "./appearance-settings";
+import { PhoneSettings } from "./phone-settings";
 import { PushSettings } from "./push-settings";
 import { ResumeImport } from "./resume-import";
 import { ExperienceEditor, SkillsEditor } from "./experience-editor";
@@ -77,6 +78,8 @@ export default async function SettingsPage() {
     full_name: (b.blocked as unknown as { full_name: string } | null)?.full_name ?? "Unknown",
   }));
 
+  const { data: myPhone } = await supabase.from("profile_phones").select("phone_e164").eq("user_id", user.id).maybeSingle();
+
   return (
     <>
       <LoadError errors={pageErrors} className="mx-4 mt-4" />
@@ -89,6 +92,10 @@ export default async function SettingsPage() {
           <div className="mt-6">
             <SettingsForm profile={profile} />
           </div>
+
+          <SettingsSection title="Phone">
+            <PhoneSettings current={myPhone?.phone_e164 ?? null} />
+          </SettingsSection>
 
           <SettingsSection title="Appearance">
             <AppearanceSettings current={parseTheme((await cookies()).get(THEME_COOKIE)?.value)} />

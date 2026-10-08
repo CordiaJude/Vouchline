@@ -35,6 +35,7 @@ const STEPS = [
 const FIELD_STEP: Record<string, number> = {
   full_name: 0,
   city: 0,
+  phone: 0,
   status: 1,
   job_title: 1,
   employer: 1,
@@ -180,6 +181,12 @@ export function OnboardingForm({
         <AvatarUpload userId={userId} fullName={defaultFullName ?? ""} avatarUrl={defaultAvatarUrl} onUploaded={setAvatarUrl} />
         <ProfileField label="Full name" name="full_name" defaultValue={defaultFullName} required error={fieldError("full_name")} />
         <ProfileField label="City" name="city" placeholder="Dallas, TX" required error={fieldError("city")} />
+        <div className="flex flex-col gap-1">
+          <ProfileField label="Phone number" name="phone" type="tel" placeholder="(214) 555-0123" error={fieldError("phone")} />
+          <p className="text-xs text-muted">
+            So friends who have your number can find you. Never shown on your profile.
+          </p>
+        </div>
       </Step>
 
       {/* ===== 2. What you do ===== */}

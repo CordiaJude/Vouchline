@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/safe-next";
+import { normalizePhone } from "@/lib/contacts";
 import { createClient } from "@/lib/supabase/server";
 import { parseOnboardingFormData } from "@/lib/profile-schema";
 import { cleanInterests, cleanGoals } from "@/lib/interests";
@@ -34,6 +35,15 @@ export async function createProfile(
     };
   }
 
+  const rawPhone = String(formData.get("phone") ?? "").trim();
+  const phone = rawPhone ? normalizePhone(rawPhone) : null;
+  if (rawPhone && !phone) {
+    return {
+      fieldErrors: { phone: ["Enter a full phone number, like (214) 555-0123 or +44 20 7946 0958."] },
+      formError: "Please fix the highlighted fields below.",
+    };
+  }
+
   const { is_18_plus, ...profileFields } = parsed.data;
 
   const { error } = await supabase.from("profiles").insert({
@@ -49,6 +59,11 @@ export async function createProfile(
   if (error) {
     console.error("onboarding profile insert failed", error);
     return { formError: error.message };
+  }
+
+  if (phone) {
+    const { error: phoneError } = await supabase.rpc("set_my_phone", { p_phone: phone });
+    if (phoneError) console.error("onboarding: couldn't save phone", phoneError);
   }
 
   // Start their history with what they just told us (editable in Settings).
@@ -98,7 +113,8 @@ export async function createProfile(
   }
 
   // Came here from a link (someone's QR code or profile)? Go straight back
-  // to it. Otherwise new accounts land on interest-based suggestions.
+  // to it. Otherwise: find people you know from your contacts, then
+  // interest-based suggestions.
   const next = safeNext(formData.get("next"));
-  redirect(next ?? "/onboarding/people");
+  redirect(next ?? "/onboarding/contacts");
 }

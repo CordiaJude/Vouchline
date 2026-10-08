@@ -17,6 +17,8 @@ export default function PrivacyPage() {
           items={[
             <>
               <b>Account:</b> your email address and, if you use Google sign-in, your name and profile photo from Google.
+              If you add one, your phone number. It&apos;s never shown to other members and is used only so people
+              who already have your number can find you.
             </>,
             <>
               <b>Profile:</b> what you add: name, photo, headline, city, whether you&apos;re a student, school, major,
@@ -75,8 +77,8 @@ export default function PrivacyPage() {
 
       <Section title="Finding friends from your contacts">
         <p>
-          If you use Find friends, the email addresses you choose are scrambled (hashed) on your device before anything
-          is sent. We compare those hashes with members who chose &ldquo;Let people find me&rdquo;, show you the
+          If you use Find friends, the phone numbers and email addresses you choose are scrambled (hashed) on your
+          device before anything is sent. We compare those hashes with members who chose &ldquo;Let people find me&rdquo;, show you the
           matches, and then throw the rest away. We don&apos;t store your address book or create profiles for people who
           haven&apos;t joined.
         </p>
